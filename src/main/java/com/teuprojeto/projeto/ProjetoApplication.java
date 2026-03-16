@@ -197,17 +197,17 @@ public class ProjetoApplication {
             System.out.println("=== TESTE FATURA ===");
             Fatura fatura = new Fatura();
             fatura.setNum(1L);
-            fatura.setValor(new BigDecimal("59.98"));
+            fatura.setDataemissao(LocalDate.now());
             faturaService.guardar(fatura);
             faturaService.listarTodos().forEach(f ->
-                    System.out.println(f.getNum() + " - " + f.getValor())
+                    System.out.println(f.getNum() + " - " + f.getDataemissao())
             );
 
             System.out.println("=== TESTE PAGAMENTO ===");
             Pagamento pagamento = new Pagamento();
             pagamento.setCod(1L);
             pagamento.setNome("Pagamento Multibanco");
-            pagamento.setPrecoactvenda(new BigDecimal("59.98"));
+            pagamento.setValorpago(new BigDecimal("59.98"));
             pagamento.setIdencomenda(new BigDecimal("1"));
             pagamento.setNumfatura(1L);
             pagamentoService.guardar(pagamento);
