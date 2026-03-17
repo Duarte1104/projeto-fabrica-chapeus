@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "\"Fatura\"", schema = "public")
@@ -15,8 +15,8 @@ public class Fatura {
     @Column(name = "\"num\"")
     private Long num;
 
-    @Column(name = "\"valor\"")
-    private BigDecimal valor;
+    @Column(name = "\"dataemissao\"")
+    private LocalDate dataemissao;
 
     public Fatura() {
     }
@@ -29,11 +29,11 @@ public class Fatura {
         this.num = num;
     }
 
-    public BigDecimal getValor() {
-        return valor;
+    public LocalDate getDataemissao() {
+        return dataemissao;
     }
 
-    public void setValor(BigDecimal valor) {
-        this.valor = valor;
+    public void setDataemissao(LocalDate dataemissao) {
+        this.dataemissao = dataemissao;
     }
 }

@@ -18,8 +18,8 @@ public class Pagamento {
     @Column(name = "\"nome\"")
     private String nome;
 
-    @Column(name = "\"precoactvenda\"")
-    private BigDecimal precoactvenda;
+    @Column(name = "\"valorpago\"")
+    private BigDecimal valorpago;
 
     @Column(name = "\"idencomenda\"")
     private BigDecimal idencomenda;
@@ -46,12 +46,12 @@ public class Pagamento {
         this.nome = nome;
     }
 
-    public BigDecimal getPrecoactvenda() {
-        return precoactvenda;
+    public BigDecimal getValorpago() {
+        return valorpago;
     }
 
-    public void setPrecoactvenda(BigDecimal precoactvenda) {
-        this.precoactvenda = precoactvenda;
+    public void setValorpago(BigDecimal valorpago) {
+        this.valorpago = valorpago;
     }
 
     public BigDecimal getIdencomenda() {
