@@ -1,55 +1,19 @@
-package com.teuprojeto.projeto.entity;
+package com.teuprojeto.projeto.dto.cliente;
 
-import jakarta.persistence.*;
+public class CriarClienteRequest {
 
-@Entity
-@Table(name = "\"Cliente\"", schema = "public")
-public class Cliente {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "\"cod\"")
-    private Integer cod;
-
-    @Column(name = "\"nome\"", nullable = false)
     private String nome;
-
-    @Column(name = "\"email\"", nullable = false, unique = true)
     private String email;
-
-    @Column(name = "\"telefone\"", nullable = false)
     private String telefone;
-
-    @Column(name = "\"nif\"", nullable = false, unique = true)
     private String nif;
-
-    @Column(name = "\"tipo\"", nullable = false)
     private String tipo;
-
-    @Column(name = "\"rua\"", nullable = false)
     private String rua;
-
-    @Column(name = "\"nporta\"")
     private String nporta;
-
-    @Column(name = "\"codpostal\"", nullable = false)
     private String codpostal;
-
-    @Column(name = "\"cidade\"", nullable = false)
     private String cidade;
-
-    @Column(name = "\"observacoes\"", length = 1000)
     private String observacoes;
 
-    public Cliente() {
-    }
-
-    public Integer getCod() {
-        return cod;
-    }
-
-    public void setCod(Integer cod) {
-        this.cod = cod;
+    public CriarClienteRequest() {
     }
 
     public String getNome() {

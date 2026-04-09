@@ -1,38 +1,16 @@
-package com.teuprojeto.projeto.entity;
-
-import jakarta.persistence.*;
+package com.teuprojeto.projeto.dto.gestor;
 
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "material", schema = "public")
-public class Material {
+public class CriarMaterialRequest {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
-
-    @Column(name = "nome", nullable = false, length = 200)
     private String nome;
-
-    @Column(name = "stockatual", nullable = false)
     private BigDecimal stockAtual;
-
-    @Column(name = "stockminimo", nullable = false)
     private BigDecimal stockMinimo;
-
-    @Column(name = "unidade", nullable = false, length = 50)
     private String unidade;
-
-    @Column(name = "custounitario", nullable = false)
     private BigDecimal custoUnitario;
 
-    public Material() {
-    }
-
-    public Long getId() {
-        return id;
+    public CriarMaterialRequest() {
     }
 
     public String getNome() {

@@ -1,12 +1,13 @@
 package com.teuprojeto.projeto.controller;
 
+import com.teuprojeto.projeto.dto.encomenda.CriarEncomendaRequest;
 import com.teuprojeto.projeto.entity.Encomenda;
 import com.teuprojeto.projeto.service.EncomendaService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/encomendas")
@@ -18,23 +19,43 @@ public class EncomendaController {
         this.encomendaService = encomendaService;
     }
 
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Encomenda criar(@RequestBody CriarEncomendaRequest request) {
+        return encomendaService.criar(request);
+    }
+
     @GetMapping
-    public List<Encomenda> listarTodos() {
-        return encomendaService.listarTodos();
+    public List<Encomenda> listarTodas() {
+        return encomendaService.listarTodas();
+    }
+
+    @GetMapping("/cliente/{idCliente}")
+    public List<Encomenda> listarPorCliente(@PathVariable Integer idCliente) {
+        return encomendaService.listarPorCliente(idCliente);
     }
 
     @GetMapping("/{id}")
-    public Optional<Encomenda> procurarPorId(@PathVariable BigDecimal id) {
+    public Encomenda procurarPorId(@PathVariable BigDecimal id) {
         return encomendaService.procurarPorId(id);
     }
 
-    @PostMapping
-    public Encomenda guardar(@RequestBody Encomenda encomenda) {
-        return encomendaService.guardar(encomenda);
-    }
-
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void apagar(@PathVariable BigDecimal id) {
         encomendaService.apagar(id);
+    }
+
+    @PatchMapping("/{id}/estado/{idNovoEstado}")
+    public Encomenda mudarEstado(
+            @PathVariable BigDecimal id,
+            @PathVariable Long idNovoEstado
+    ) {
+        return encomendaService.mudarEstado(id, idNovoEstado);
+    }
+
+    @GetMapping("/com-design")
+    public List<Encomenda> listarComDesign() {
+        return encomendaService.listarComDesign();
     }
 }
