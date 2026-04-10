@@ -11,7 +11,8 @@
 	<groupId>com.teuprojeto</groupId>
 	<artifactId>projeto</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>projeto</name>
+    <packaging>pom</packaging>
+    <name>projeto</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
@@ -20,7 +21,10 @@
 	<developers>
 		<developer/>
 	</developers>
-	<scm>
+    <modules>
+        <module>desktop</module>
+    </modules>
+    <scm>
 		<connection/>
 		<developerConnection/>
 		<tag/>
