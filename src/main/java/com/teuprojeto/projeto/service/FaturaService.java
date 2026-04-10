@@ -1,34 +1,66 @@
 package com.teuprojeto.projeto.service;
 
+import com.teuprojeto.projeto.dto.rececionista.CriarFaturaRequest;
+import com.teuprojeto.projeto.entity.Encomenda;
 import com.teuprojeto.projeto.entity.Fatura;
+import com.teuprojeto.projeto.repository.EncomendaRepository;
 import com.teuprojeto.projeto.repository.FaturaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class FaturaService {
 
     private final FaturaRepository faturaRepository;
+    private final EncomendaRepository encomendaRepository;
+    private final FinanceiroService financeiroService;
 
-    public FaturaService(FaturaRepository faturaRepository) {
+    public FaturaService(
+            FaturaRepository faturaRepository,
+            EncomendaRepository encomendaRepository,
+            FinanceiroService financeiroService
+    ) {
         this.faturaRepository = faturaRepository;
+        this.encomendaRepository = encomendaRepository;
+        this.financeiroService = financeiroService;
     }
 
-    public List<Fatura> listarTodos() {
-        return faturaRepository.findAll();
-    }
+    @Transactional
+    public Fatura criar(CriarFaturaRequest request) {
+        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda())
+                .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
-    public Optional<Fatura> procurarPorId(Long id) {
-        return faturaRepository.findById(id);
-    }
+        if (!Long.valueOf(3L).equals(encomenda.getIdestado())) {
+            throw new IllegalArgumentException("Só é possível faturar encomendas prontas.");
+        }
 
-    public Fatura guardar(Fatura fatura) {
+        Fatura fatura = new Fatura();
+        fatura.setIdEncomenda(request.getIdEncomenda());
+        fatura.setData(LocalDateTime.now());
+        fatura.setValor(encomenda.getValortotal());
+        fatura.setObservacoes(request.getObservacoes());
+
+        encomenda.setIdestado(4L); // PAGA
+        encomendaRepository.save(encomenda);
+
+        financeiroService.registarEntrada(
+                fatura.getValor(),
+                "Pagamento da encomenda " + encomenda.getNum(),
+                "FATURA"
+        );
+
         return faturaRepository.save(fatura);
     }
 
-    public void apagar(Long id) {
-        faturaRepository.deleteById(id);
+    public List<Fatura> listarTodas() {
+        return faturaRepository.findAll();
+    }
+
+    public List<Fatura> listarPorEncomenda(BigDecimal idEncomenda) {
+        return faturaRepository.findByIdEncomenda(idEncomenda);
     }
 }

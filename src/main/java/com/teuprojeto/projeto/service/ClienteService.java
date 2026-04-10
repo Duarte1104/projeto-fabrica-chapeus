@@ -4,6 +4,7 @@ import com.teuprojeto.projeto.dto.cliente.CriarClienteRequest;
 import com.teuprojeto.projeto.entity.Cliente;
 import com.teuprojeto.projeto.repository.ClienteRepository;
 import org.springframework.stereotype.Service;
+import com.teuprojeto.projeto.dto.cliente.AtualizarClienteRequest;
 
 import java.util.List;
 
@@ -54,5 +55,23 @@ public class ClienteService {
             throw new IllegalArgumentException("Cliente não encontrado.");
         }
         clienteRepository.deleteById(id);
+    }
+
+    public Cliente atualizar(Integer id, AtualizarClienteRequest request) {
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado."));
+
+        cliente.setNome(request.getNome());
+        cliente.setEmail(request.getEmail());
+        cliente.setTelefone(request.getTelefone());
+        cliente.setNif(request.getNif());
+        cliente.setTipo(request.getTipo());
+        cliente.setRua(request.getRua());
+        cliente.setNporta(request.getNporta());
+        cliente.setCodpostal(request.getCodpostal());
+        cliente.setCidade(request.getCidade());
+        cliente.setObservacoes(request.getObservacoes());
+
+        return clienteRepository.save(cliente);
     }
 }

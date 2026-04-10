@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.teuprojeto.projeto.dto.cliente.AtualizarClienteRequest;
 
 @RestController
 @RequestMapping("/clientes")
@@ -32,6 +33,11 @@ public class ClienteController {
     @GetMapping("/{id}")
     public Cliente procurarPorId(@PathVariable Integer id) {
         return clienteService.procurarPorId(id);
+    }
+
+    @PutMapping("/{id}")
+    public Cliente atualizar(@PathVariable Integer id, @RequestBody AtualizarClienteRequest request) {
+        return clienteService.atualizar(id, request);
     }
 
     @DeleteMapping("/{id}")

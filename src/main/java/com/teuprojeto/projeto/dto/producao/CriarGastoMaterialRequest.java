@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public class CriarGastoMaterialRequest {
 
     private BigDecimal idEncomenda;
-    private String material;
+    private Long idMaterial;
     private BigDecimal quantidade;
     private String observacoes;
 
@@ -20,12 +20,12 @@ public class CriarGastoMaterialRequest {
         this.idEncomenda = idEncomenda;
     }
 
-    public String getMaterial() {
-        return material;
+    public Long getIdMaterial() {
+        return idMaterial;
     }
 
-    public void setMaterial(String material) {
-        this.material = material;
+    public void setIdMaterial(Long idMaterial) {
+        this.idMaterial = idMaterial;
     }
 
     public BigDecimal getQuantidade() {

@@ -5,24 +5,27 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "\"GastoMaterial\"", schema = "public")
+@Table(name = "gasto_material", schema = "public")
 public class GastoMaterial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "\"id\"")
+    @Column(name = "id")
     private Long id;
 
-    @Column(name = "\"idencomenda\"", nullable = false)
+    @Column(name = "idencomenda", nullable = false)
     private BigDecimal idEncomenda;
 
-    @Column(name = "\"material\"", nullable = false, length = 200)
+    @Column(name = "idmaterial", nullable = false)
+    private Long idMaterial;
+
+    @Column(name = "material", nullable = false, length = 200)
     private String material;
 
-    @Column(name = "\"quantidade\"", nullable = false)
+    @Column(name = "quantidade", nullable = false)
     private BigDecimal quantidade;
 
-    @Column(name = "\"observacoes\"", length = 1000)
+    @Column(name = "observacoes", length = 1000)
     private String observacoes;
 
     public GastoMaterial() {
@@ -38,6 +41,14 @@ public class GastoMaterial {
 
     public void setIdEncomenda(BigDecimal idEncomenda) {
         this.idEncomenda = idEncomenda;
+    }
+
+    public Long getIdMaterial() {
+        return idMaterial;
+    }
+
+    public void setIdMaterial(Long idMaterial) {
+        this.idMaterial = idMaterial;
     }
 
     public String getMaterial() {

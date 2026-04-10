@@ -1,39 +1,67 @@
 package com.teuprojeto.projeto.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "\"Fatura\"", schema = "public")
+@Table(name = "fatura", schema = "public")
 public class Fatura {
 
     @Id
-    @Column(name = "\"num\"")
-    private Long num;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "\"dataemissao\"")
-    private LocalDate dataemissao;
+    @Column(name = "idencomenda", nullable = false)
+    private BigDecimal idEncomenda;
+
+    @Column(name = "data", nullable = false)
+    private LocalDateTime data;
+
+    @Column(name = "valor", nullable = false)
+    private BigDecimal valor;
+
+    @Column(name = "observacoes", length = 1000)
+    private String observacoes;
 
     public Fatura() {
     }
 
-    public Long getNum() {
-        return num;
+    public Long getId() {
+        return id;
     }
 
-    public void setNum(Long num) {
-        this.num = num;
+    public BigDecimal getIdEncomenda() {
+        return idEncomenda;
     }
 
-    public LocalDate getDataemissao() {
-        return dataemissao;
+    public void setIdEncomenda(BigDecimal idEncomenda) {
+        this.idEncomenda = idEncomenda;
     }
 
-    public void setDataemissao(LocalDate dataemissao) {
-        this.dataemissao = dataemissao;
+    public LocalDateTime getData() {
+        return data;
+    }
+
+    public void setData(LocalDateTime data) {
+        this.data = data;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
+    }
+
+    public String getObservacoes() {
+        return observacoes;
+    }
+
+    public void setObservacoes(String observacoes) {
+        this.observacoes = observacoes;
     }
 }

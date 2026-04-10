@@ -1,11 +1,13 @@
 package com.teuprojeto.projeto.controller;
 
+import com.teuprojeto.projeto.dto.rececionista.CriarFaturaRequest;
 import com.teuprojeto.projeto.entity.Fatura;
 import com.teuprojeto.projeto.service.FaturaService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/faturas")
@@ -17,23 +19,19 @@ public class FaturaController {
         this.faturaService = faturaService;
     }
 
-    @GetMapping
-    public List<Fatura> listarTodos() {
-        return faturaService.listarTodos();
-    }
-
-    @GetMapping("/{id}")
-    public Optional<Fatura> procurarPorId(@PathVariable Long id) {
-        return faturaService.procurarPorId(id);
-    }
-
     @PostMapping
-    public Fatura guardar(@RequestBody Fatura fatura) {
-        return faturaService.guardar(fatura);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Fatura criar(@RequestBody CriarFaturaRequest request) {
+        return faturaService.criar(request);
     }
 
-    @DeleteMapping("/{id}")
-    public void apagar(@PathVariable Long id) {
-        faturaService.apagar(id);
+    @GetMapping
+    public List<Fatura> listarTodas() {
+        return faturaService.listarTodas();
+    }
+
+    @GetMapping("/encomenda/{idEncomenda}")
+    public List<Fatura> listarPorEncomenda(@PathVariable BigDecimal idEncomenda) {
+        return faturaService.listarPorEncomenda(idEncomenda);
     }
 }
