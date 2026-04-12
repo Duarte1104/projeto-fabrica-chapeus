@@ -4,6 +4,7 @@ import com.teuprojeto.desktop.model.AppUser;
 import com.teuprojeto.desktop.view.DashboardView;
 import com.teuprojeto.desktop.view.LoginView;
 import com.teuprojeto.desktop.view.RegisterView;
+import com.teuprojeto.desktop.view.gestor.GestorShellView;
 import com.teuprojeto.desktop.view.rececionista.RececionistaShellView;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -34,6 +35,12 @@ public class MainApp extends Application {
     public void showDashboard(AppUser user) {
         if (user.getRole().name().equals("RECECIONISTA")) {
             Scene scene = new Scene(new RececionistaShellView(this, user).getView(), 1280, 820);
+            stage.setScene(scene);
+            return;
+        }
+
+        if (user.getRole().name().equals("GESTOR")) {
+            Scene scene = new Scene(new GestorShellView(this, user).getView(), 1280, 820);
             stage.setScene(scene);
             return;
         }

@@ -1,4 +1,4 @@
-package com.teuprojeto.desktop.view.rececionista;
+package com.teuprojeto.desktop.view.gestor;
 
 import com.teuprojeto.desktop.MainApp;
 import com.teuprojeto.desktop.model.AppUser;
@@ -12,16 +12,18 @@ import javafx.scene.layout.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class RececionistaShellView {
+public class GestorShellView {
 
     private final MainApp app;
     private final AppUser user;
 
     private final BorderPane root = new BorderPane();
     private final StackPane contentArea = new StackPane();
-    private final Map<RececionistaPage, Button> menuButtons = new LinkedHashMap<>();
+    private final Map<GestorPage, Button> menuButtons = new LinkedHashMap<>();
 
-    public RececionistaShellView(MainApp app, AppUser user) {
+    private MaterialRow materialSelecionado;
+
+    public GestorShellView(MainApp app, AppUser user) {
         this.app = app;
         this.user = user;
     }
@@ -32,7 +34,7 @@ public class RececionistaShellView {
         root.setCenter(contentArea);
 
         contentArea.setStyle("-fx-background-color: #efefef;");
-        setPage(RececionistaPage.DASHBOARD);
+        setPage(GestorPage.DASHBOARD);
 
         return root;
     }
@@ -57,10 +59,11 @@ public class RececionistaShellView {
         VBox menuBox = new VBox(14);
         menuBox.setPadding(new Insets(28, 18, 18, 18));
 
-        addMenuButton(menuBox, "Dashboard", RececionistaPage.DASHBOARD);
-        addMenuButton(menuBox, "Clientes", RececionistaPage.CLIENTES_LISTAR);
-        addMenuButton(menuBox, "Encomendas", RececionistaPage.ENCOMENDAS_LISTAR);
-        addMenuButton(menuBox, "Faturas", RececionistaPage.FATURAS);
+        addMenuButton(menuBox, "Dashboard", GestorPage.DASHBOARD);
+        addMenuButton(menuBox, "Stock", GestorPage.STOCK);
+        addMenuButton(menuBox, "Faturação", GestorPage.FATURACAO);
+        addMenuButton(menuBox, "Despesas", GestorPage.DESPESAS);
+        addMenuButton(menuBox, "Balanço", GestorPage.BALANCO);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -84,14 +87,14 @@ public class RececionistaShellView {
         topbar.setPadding(new Insets(18, 24, 18, 24));
         topbar.setStyle("-fx-background-color: white; -fx-border-color: #d8d8d8; -fx-border-width: 0 0 1 0;");
 
-        Label userLabel = new Label(user.getEmail() + "  |  Rececionista");
+        Label userLabel = new Label(user.getEmail() + "  |  Gestor");
         userLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #222;");
         topbar.getChildren().add(userLabel);
 
         return topbar;
     }
 
-    private void addMenuButton(VBox parent, String text, RececionistaPage page) {
+    private void addMenuButton(VBox parent, String text, GestorPage page) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setPrefHeight(44);
@@ -102,26 +105,35 @@ public class RececionistaShellView {
         parent.getChildren().add(btn);
     }
 
-    private void setPage(RececionistaPage page) {
-        for (Map.Entry<RececionistaPage, Button> entry : menuButtons.entrySet()) {
+    private void setPage(GestorPage page) {
+        for (Map.Entry<GestorPage, Button> entry : menuButtons.entrySet()) {
             entry.getValue().setStyle(buttonStyle(entry.getKey() == page));
         }
 
         Parent pageView = switch (page) {
-            case DASHBOARD -> new RececionistaDashboardPage(this).getView();
-            case CLIENTES_LISTAR -> new RececionistaClientesListPage(this).getView();
-            case CLIENTES_CRIAR -> new RececionistaCriarClientePage(this).getView();
-            case CLIENTES_VER -> new RececionistaVerClientePage(this).getView();
-            case ENCOMENDAS_LISTAR -> new RececionistaEncomendasListPage(this).getView();
-            case ENCOMENDAS_CRIAR -> new RececionistaCriarEncomendaPage(this).getView();
-            case FATURAS -> new RececionistaFaturasPage(this).getView();
+            case DASHBOARD -> new GestorDashboardPage(this).getView();
+            case STOCK -> new GestorStockPage(this).getView();
+            case NOVO_MATERIAL -> new GestorNovoMaterialPage(this).getView();
+            case EDITAR_MATERIAL -> new GestorEditarMaterialPage(this).getView();
+            case FATURACAO -> new GestorFaturacaoPage(this).getView();
+            case DESPESAS -> new GestorDespesasPage(this).getView();
+            case NOVA_DESPESA -> new GestorNovaDespesaPage(this).getView();
+            case BALANCO -> new GestorBalancoPage(this).getView();
         };
 
         contentArea.getChildren().setAll(pageView);
     }
 
-    public void navigateTo(RececionistaPage page) {
+    public void navigateTo(GestorPage page) {
         setPage(page);
+    }
+
+    public MaterialRow getMaterialSelecionado() {
+        return materialSelecionado;
+    }
+
+    public void setMaterialSelecionado(MaterialRow materialSelecionado) {
+        this.materialSelecionado = materialSelecionado;
     }
 
     private String buttonStyle(boolean active) {
