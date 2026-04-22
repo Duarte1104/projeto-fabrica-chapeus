@@ -21,6 +21,8 @@ public class RececionistaShellView {
     private final StackPane contentArea = new StackPane();
     private final Map<RececionistaPage, Button> menuButtons = new LinkedHashMap<>();
 
+    private ClienteRow clienteSelecionado;
+
     public RececionistaShellView(MainApp app, AppUser user) {
         this.app = app;
         this.user = user;
@@ -122,6 +124,14 @@ public class RececionistaShellView {
 
     public void navigateTo(RececionistaPage page) {
         setPage(page);
+    }
+
+    public ClienteRow getClienteSelecionado() {
+        return clienteSelecionado;
+    }
+
+    public void setClienteSelecionado(ClienteRow clienteSelecionado) {
+        this.clienteSelecionado = clienteSelecionado;
     }
 
     private String buttonStyle(boolean active) {
