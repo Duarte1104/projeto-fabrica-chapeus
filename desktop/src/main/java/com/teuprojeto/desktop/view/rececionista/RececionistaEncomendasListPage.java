@@ -1,6 +1,14 @@
 package com.teuprojeto.desktop.view.rececionista;
 
+import com.teuprojeto.desktop.dto.ClienteDto;
+import com.teuprojeto.desktop.dto.EncomendaDto;
+import com.teuprojeto.desktop.service.ClienteApiService;
+import com.teuprojeto.desktop.service.EncomendaApiService;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -8,9 +16,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 public class RececionistaEncomendasListPage {
 
     private final RececionistaShellView shell;
+    private final EncomendaApiService encomendaApiService = new EncomendaApiService();
+    private final ClienteApiService clienteApiService = new ClienteApiService();
 
     public RececionistaEncomendasListPage(RececionistaShellView shell) {
         this.shell = shell;
@@ -27,7 +42,12 @@ public class RececionistaEncomendasListPage {
         Button nova = RececionistaUiFactory.primaryButton("Nova Encomenda");
         nova.setOnAction(e -> shell.navigateTo(RececionistaPage.ENCOMENDAS_CRIAR));
 
-        actions.getChildren().addAll(search, nova);
+        Button atualizar = RececionistaUiFactory.secondaryButton("Atualizar");
+
+        actions.getChildren().addAll(search, nova, atualizar);
+
+        Label statusLabel = new Label("A carregar encomendas...");
+        statusLabel.setStyle("-fx-text-fill: #666666;");
 
         TableView<EncomendaRow> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
@@ -44,34 +64,186 @@ public class RececionistaEncomendasListPage {
         TableColumn<EncomendaRow, String> design = new TableColumn<>("Design");
         design.setCellValueFactory(c -> c.getValue().designProperty());
 
-        TableColumn<EncomendaRow, String> acao = new TableColumn<>("Ações");
+        ObservableList<EncomendaRow> masterData = FXCollections.observableArrayList();
+
+        TableColumn<EncomendaRow, Void> acao = new TableColumn<>("Ações");
         acao.setCellFactory(col -> new TableCell<>() {
             private final Button verBtn = new Button("Ver");
-            private final HBox box = new HBox(verBtn);
+            private final Button apagarBtn = new Button("Apagar");
+            private final HBox box = new HBox(8, verBtn, apagarBtn);
 
             {
                 box.setAlignment(Pos.CENTER);
+
                 verBtn.setStyle("-fx-background-color: white; -fx-border-color: #cfcfcf; -fx-background-radius: 6; -fx-border-radius: 6;");
+                apagarBtn.setStyle("-fx-background-color: white; -fx-border-color: #d88; -fx-text-fill: #a33; -fx-background-radius: 6; -fx-border-radius: 6;");
+
+                verBtn.setOnAction(e -> {
+                    EncomendaRow row = getTableView().getItems().get(getIndex());
+                    shell.setEncomendaSelecionadaId(row.getId());
+                    shell.navigateTo(RececionistaPage.ENCOMENDAS_VER);
+                });
+
+                apagarBtn.setOnAction(e -> {
+                    EncomendaRow row = getTableView().getItems().get(getIndex());
+                    confirmarEApagar(row, masterData, statusLabel, table);
+                });
             }
 
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 setGraphic(empty ? null : box);
             }
         });
 
         table.getColumns().addAll(numero, cliente, estado, design, acao);
-        table.setItems(FXCollections.observableArrayList(
-                new EncomendaRow("ENC-1121", "João Santos", "AGUARDA_DESIGN", "Sim"),
-                new EncomendaRow("ENC-1110", "Ana Costa", "PREPARACAO", "Não"),
-                new EncomendaRow("ENC-1232", "Pedro Lima", "PRONTA", "Sim")
-        ));
+
+        FilteredList<EncomendaRow> filtrados = new FilteredList<>(masterData, encomenda -> true);
+
+        search.textProperty().addListener((obs, oldValue, newValue) -> {
+            String termo = newValue == null ? "" : newValue.trim().toLowerCase();
+
+            filtrados.setPredicate(encomenda -> {
+                if (termo.isBlank()) {
+                    return true;
+                }
+
+                return encomenda.getNumero().toLowerCase().contains(termo)
+                        || encomenda.getCliente().toLowerCase().contains(termo)
+                        || encomenda.getEstado().toLowerCase().contains(termo)
+                        || encomenda.getDesign().toLowerCase().contains(termo);
+            });
+        });
+
+        SortedList<EncomendaRow> ordenados = new SortedList<>(filtrados);
+        ordenados.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(ordenados);
+
+        atualizar.setOnAction(e -> carregarEncomendas(masterData, statusLabel, table));
+        carregarEncomendas(masterData, statusLabel, table);
 
         VBox card = RececionistaUiFactory.createCard();
-        card.getChildren().addAll(actions, table);
+        card.getChildren().addAll(actions, statusLabel, table);
 
         root.getChildren().add(card);
         return root;
+    }
+
+    private void confirmarEApagar(EncomendaRow row,
+                                  ObservableList<EncomendaRow> masterData,
+                                  Label statusLabel,
+                                  TableView<EncomendaRow> table) {
+
+        Alert confirmacao = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacao.setHeaderText("Confirmar eliminação");
+        confirmacao.setContentText("Tem a certeza que deseja apagar a encomenda " + row.getNumero() + "?");
+
+        Optional<ButtonType> resultado = confirmacao.showAndWait();
+
+        if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
+            return;
+        }
+
+        statusLabel.setText("A apagar encomenda...");
+        table.setDisable(true);
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                encomendaApiService.apagar(row.getId());
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            table.setDisable(false);
+
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setHeaderText("Encomenda apagada");
+            ok.setContentText("A encomenda foi apagada com sucesso.");
+            ok.showAndWait();
+
+            carregarEncomendas(masterData, statusLabel, table);
+        });
+
+        task.setOnFailed(event -> {
+            table.setDisable(false);
+            statusLabel.setText("Erro ao apagar encomenda.");
+
+            Alert erro = new Alert(Alert.AlertType.ERROR);
+            erro.setHeaderText("Erro ao apagar encomenda");
+            erro.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            erro.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void carregarEncomendas(ObservableList<EncomendaRow> masterData, Label statusLabel, TableView<EncomendaRow> table) {
+        statusLabel.setText("A carregar encomendas...");
+        table.setDisable(true);
+
+        Task<List<EncomendaRow>> task = new Task<>() {
+            @Override
+            protected List<EncomendaRow> call() {
+                List<EncomendaDto> encomendas = encomendaApiService.listarEncomendas();
+                List<ClienteDto> clientes = clienteApiService.listarTodos();
+
+                Map<Integer, String> nomesClientes = clientes.stream()
+                        .filter(c -> c.getCod() != null)
+                        .collect(Collectors.toMap(
+                                ClienteDto::getCod,
+                                c -> c.getNome() == null ? "Cliente sem nome" : c.getNome(),
+                                (a, b) -> a
+                        ));
+
+                return encomendas.stream()
+                        .map(encomenda -> new EncomendaRow(
+                                encomenda.getNum(),
+                                "ENC-" + encomenda.getNum(),
+                                nomesClientes.getOrDefault(encomenda.getIdcliente(), "Cliente #" + encomenda.getIdcliente()),
+                                mapearEstado(encomenda.getIdestado()),
+                                Boolean.TRUE.equals(encomenda.getDesign()) ? "Sim" : "Não"
+                        ))
+                        .toList();
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            masterData.setAll(task.getValue());
+            statusLabel.setText("Encomendas carregadas: " + masterData.size());
+            table.setDisable(false);
+        });
+
+        task.setOnFailed(event -> {
+            statusLabel.setText("Erro ao carregar encomendas.");
+            table.setDisable(false);
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Erro ao obter encomendas");
+            alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            alert.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private String mapearEstado(Long idestado) {
+        if (idestado == null) {
+            return "SEM_ESTADO";
+        }
+
+        return switch (idestado.intValue()) {
+            case 1 -> "AGUARDA_DESIGN";
+            case 2 -> "PREPARACAO";
+            case 3 -> "PRONTA";
+            case 4 -> "PAGA";
+            default -> "ESTADO_" + idestado;
+        };
     }
 }

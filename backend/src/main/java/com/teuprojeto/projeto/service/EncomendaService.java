@@ -6,6 +6,7 @@ import com.teuprojeto.projeto.entity.Encomenda;
 import com.teuprojeto.projeto.entity.LinhaEncomenda;
 import com.teuprojeto.projeto.repository.ClienteRepository;
 import com.teuprojeto.projeto.repository.EncomendaRepository;
+import com.teuprojeto.projeto.repository.FuncionarioRepository;
 import com.teuprojeto.projeto.repository.LinhaEncomendaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,15 +22,18 @@ public class EncomendaService {
     private final EncomendaRepository encomendaRepository;
     private final LinhaEncomendaRepository linhaEncomendaRepository;
     private final ClienteRepository clienteRepository;
+    private final FuncionarioRepository funcionarioRepository;
 
     public EncomendaService(
             EncomendaRepository encomendaRepository,
             LinhaEncomendaRepository linhaEncomendaRepository,
-            ClienteRepository clienteRepository
+            ClienteRepository clienteRepository,
+            FuncionarioRepository funcionarioRepository
     ) {
         this.encomendaRepository = encomendaRepository;
         this.linhaEncomendaRepository = linhaEncomendaRepository;
         this.clienteRepository = clienteRepository;
+        this.funcionarioRepository = funcionarioRepository;
     }
 
     @Transactional
@@ -57,10 +61,16 @@ public class EncomendaService {
         encomenda.setDataEntrega(request.getDataEntrega());
         encomenda.setObservacoes(request.getObservacoes());
         encomenda.setIdcliente(request.getIdCliente());
-        encomenda.setIdestado(1L);
         encomenda.setValortotal(valorTotal);
         encomenda.setDesign(request.getDesign());
         encomenda.setDescricaoDesign(request.getDescricaoDesign());
+        encomenda.setIdfuncionario(null);
+
+        if (Boolean.TRUE.equals(request.getDesign())) {
+            encomenda.setIdestado(1L);
+        } else {
+            encomenda.setIdestado(2L);
+        }
 
         Encomenda encomendaGuardada = encomendaRepository.save(encomenda);
 
@@ -87,16 +97,33 @@ public class EncomendaService {
         return encomendaRepository.findByIdcliente(idCliente);
     }
 
+    public List<Encomenda> listarDisponiveisParaFuncionario() {
+        return encomendaRepository.findByIdfuncionarioIsNullAndIdestado(2L);
+    }
+
+    public List<Encomenda> listarPorFuncionario(Long idFuncionario) {
+        return encomendaRepository.findByIdfuncionario(idFuncionario);
+    }
+
     public Encomenda procurarPorId(BigDecimal id) {
         return encomendaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
     }
 
+    public List<LinhaEncomenda> listarLinhas(BigDecimal idEncomenda) {
+        Encomenda encomenda = encomendaRepository.findById(idEncomenda)
+                .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
+
+        return linhaEncomendaRepository.findByNumencomenda(encomenda.getNum());
+    }
+
+    @Transactional
     public void apagar(BigDecimal id) {
-        if (!encomendaRepository.existsById(id)) {
-            throw new IllegalArgumentException("Encomenda não encontrada.");
-        }
-        encomendaRepository.deleteById(id);
+        Encomenda encomenda = encomendaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
+
+        linhaEncomendaRepository.deleteByNumencomenda(encomenda.getNum());
+        encomendaRepository.delete(encomenda);
     }
 
     @Transactional
@@ -108,5 +135,24 @@ public class EncomendaService {
         return encomendaRepository.save(encomenda);
     }
 
+    @Transactional
+    public Encomenda aceitarEncomenda(BigDecimal idEncomenda, Long idFuncionario) {
+        Encomenda encomenda = encomendaRepository.findById(idEncomenda)
+                .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
+        if (!funcionarioRepository.existsById(idFuncionario)) {
+            throw new IllegalArgumentException("Funcionário não encontrado.");
+        }
+
+        if (encomenda.getIdfuncionario() != null) {
+            throw new IllegalArgumentException("Esta encomenda já foi atribuída a um funcionário.");
+        }
+
+        if (!Long.valueOf(2L).equals(encomenda.getIdestado())) {
+            throw new IllegalArgumentException("Só é possível aceitar encomendas em preparação.");
+        }
+
+        encomenda.setIdfuncionario(idFuncionario);
+        return encomendaRepository.save(encomenda);
+    }
 }

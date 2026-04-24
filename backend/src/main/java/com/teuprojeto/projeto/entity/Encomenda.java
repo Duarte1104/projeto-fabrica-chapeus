@@ -36,6 +36,9 @@ public class Encomenda {
     @Column(name = "\"idcliente\"", nullable = false)
     private Integer idcliente;
 
+    @Column(name = "\"idfuncionario\"")
+    private Long idfuncionario;
+
     @Column(name = "\"design\"")
     private Boolean design;
 
@@ -107,6 +110,14 @@ public class Encomenda {
 
     public void setIdcliente(Integer idcliente) {
         this.idcliente = idcliente;
+    }
+
+    public Long getIdfuncionario() {
+        return idfuncionario;
+    }
+
+    public void setIdfuncionario(Long idfuncionario) {
+        this.idfuncionario = idfuncionario;
     }
 
     public Boolean getDesign() {
