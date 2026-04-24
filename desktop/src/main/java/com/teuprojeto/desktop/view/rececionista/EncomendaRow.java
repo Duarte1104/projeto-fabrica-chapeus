@@ -5,16 +5,22 @@ import javafx.beans.property.StringProperty;
 
 public class EncomendaRow {
 
+    private final Long id;
     private final StringProperty numero;
     private final StringProperty cliente;
     private final StringProperty estado;
     private final StringProperty design;
 
-    public EncomendaRow(String numero, String cliente, String estado, String design) {
+    public EncomendaRow(Long id, String numero, String cliente, String estado, String design) {
+        this.id = id;
         this.numero = new SimpleStringProperty(numero);
         this.cliente = new SimpleStringProperty(cliente);
         this.estado = new SimpleStringProperty(estado);
         this.design = new SimpleStringProperty(design);
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public StringProperty numeroProperty() {

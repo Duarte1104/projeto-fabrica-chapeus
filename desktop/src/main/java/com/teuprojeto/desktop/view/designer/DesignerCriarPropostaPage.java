@@ -1,195 +1,163 @@
 package com.teuprojeto.desktop.view.designer;
 
-import javafx.geometry.Insets;
+import com.teuprojeto.desktop.dto.CriarDesignEncomendaRequestDto;
+import com.teuprojeto.desktop.dto.DesignEncomendaDto;
+import com.teuprojeto.desktop.service.DesignApiService;
+import javafx.concurrent.Task;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.math.BigDecimal;
 
 public class DesignerCriarPropostaPage {
 
     private final DesignerShellView shell;
-    private String ficheiroSelecionado = "Nenhum ficheiro selecionado";
+    private final DesignApiService designApiService = new DesignApiService();
 
     public DesignerCriarPropostaPage(DesignerShellView shell) {
         this.shell = shell;
     }
 
     public Parent getView() {
+        VBox root = pageContainer("Criar Proposta de Design");
+
         PedidoDesignRow pedido = shell.getPedidoSelecionado();
 
-        VBox content = DesignerUiFactory.createPageContainer("Criar Proposta de Design");
-        content.setFillWidth(true);
-
         if (pedido == null) {
-            VBox card = DesignerUiFactory.createCard();
-
-            Label aviso = new Label("Nenhum pedido de design foi selecionado.");
-            Button voltar = DesignerUiFactory.secondaryButton("Voltar");
+            VBox card = card();
+            Label aviso = new Label("Nenhum pedido foi selecionado.");
+            Button voltar = secondaryButton("Voltar");
             voltar.setOnAction(e -> shell.navigateTo(DesignerPage.PEDIDOS_DESIGN));
-
             card.getChildren().addAll(aviso, voltar);
-            content.getChildren().add(card);
-
-            return createScrollable(content);
+            root.getChildren().add(card);
+            return root;
         }
 
-        HBox topo = new HBox(18);
+        Label estado = new Label("Pedido selecionado.");
+        estado.setStyle("-fx-text-fill: #666666;");
 
-        VBox dadosPedido = DesignerUiFactory.createCard();
-        dadosPedido.setPrefWidth(520);
-        dadosPedido.setMinWidth(520);
-        HBox.setHgrow(dadosPedido, Priority.ALWAYS);
+        VBox infoCard = card();
+        Label infoTitle = sectionTitle("Informações do Pedido");
+        Label encomenda = new Label("Encomenda: " + pedido.getNumero());
+        Label cliente = new Label("Cliente: " + pedido.getCliente());
+        Label entrega = new Label("Entrega: " + pedido.getDataEntrega());
+        Label descricaoCliente = new Label("Pedido: " + pedido.getDescricaoDesign());
+        descricaoCliente.setWrapText(true);
+        infoCard.getChildren().addAll(infoTitle, encomenda, cliente, entrega, descricaoCliente);
 
-        dadosPedido.getChildren().addAll(
-                sectionTitle("Dados da Encomenda"),
-                item("Código", pedido.getCodigoEncomenda()),
-                item("Cliente", pedido.getCliente()),
-                item("Produto", pedido.getProduto()),
-                item("Quantidade", String.valueOf(pedido.getQuantidade())),
-                item("Data", pedido.getData()),
-                item("Pedido", pedido.getDescricaoPedido()),
-                item("Observações", pedido.getObservacoes())
-        );
+        TextArea descricaoDesigner = new TextArea();
+        descricaoDesigner.setPromptText("Descreve a proposta do design...");
+        descricaoDesigner.setPrefRowCount(8);
 
-        VBox especificacoes = DesignerUiFactory.createCard();
-        especificacoes.setPrefWidth(380);
-        especificacoes.setMinWidth(380);
+        TextField ficheiroField = new TextField();
+        ficheiroField.setPromptText("Nenhum ficheiro selecionado");
+        ficheiroField.setEditable(false);
 
-        TextField categoria = new TextField();
-        ComboBox<String> tamanho = new ComboBox<>();
-        tamanho.getItems().addAll("Pequeno", "Médio", "Grande");
-        tamanho.setMaxWidth(Double.MAX_VALUE);
-
-        TextField corPrincipal = new TextField();
-        TextField coresSecundarias = new TextField();
-        TextField materialPrincipal = new TextField();
-        TextField quantidadeMaterial = new TextField();
-
-        GridPane rightForm = new GridPane();
-        rightForm.setHgap(12);
-        rightForm.setVgap(12);
-
-        rightForm.add(new Label("Categoria"), 0, 0);
-        rightForm.add(categoria, 0, 1);
-
-        rightForm.add(new Label("Tamanho"), 0, 2);
-        rightForm.add(tamanho, 0, 3);
-
-        rightForm.add(new Label("Cor Principal"), 0, 4);
-        rightForm.add(corPrincipal, 0, 5);
-
-        rightForm.add(new Label("Cores Secundárias"), 0, 6);
-        rightForm.add(coresSecundarias, 0, 7);
-
-        rightForm.add(new Label("Material Principal"), 0, 8);
-        rightForm.add(materialPrincipal, 0, 9);
-
-        rightForm.add(new Label("Quantidade Material"), 0, 10);
-        rightForm.add(quantidadeMaterial, 0, 11);
-
-        especificacoes.getChildren().addAll(sectionTitle("Especificações"), rightForm);
-
-        topo.getChildren().addAll(dadosPedido, especificacoes);
-
-        VBox fichaTecnica = DesignerUiFactory.createCard();
-
-        TextField nomeDesign = new TextField();
-        nomeDesign.setPromptText("Nome da proposta / produto");
-
-        TextArea descricaoTecnica = new TextArea();
-        descricaoTecnica.setPromptText("Descrição técnica...");
-        descricaoTecnica.setPrefRowCount(4);
-
-        TextArea instrucoes = new TextArea();
-        instrucoes.setPromptText("Instruções de produção...");
-        instrucoes.setPrefRowCount(4);
-
-        fichaTecnica.getChildren().addAll(
-                sectionTitle("Ficha Técnica"),
-                new Label("Nome do Design"),
-                nomeDesign,
-                new Label("Descrição Técnica"),
-                descricaoTecnica,
-                new Label("Instruções de Produção"),
-                instrucoes
-        );
-
-        VBox uploadCard = DesignerUiFactory.createCard();
-
-        Label ficheiroLabel = new Label(ficheiroSelecionado);
-        ficheiroLabel.setStyle("-fx-text-fill: #666;");
-
-        Button selecionarFicheiro = DesignerUiFactory.secondaryButton("Selecionar Ficheiro");
-        selecionarFicheiro.setOnAction(e -> {
+        Button escolherFicheiro = secondaryButton("Escolher Ficheiro");
+        escolherFicheiro.setOnAction(e -> {
             FileChooser chooser = new FileChooser();
-            chooser.setTitle("Selecionar ficheiro do design");
-            chooser.getExtensionFilters().addAll(
-                    new FileChooser.ExtensionFilter("Ficheiros de imagem e PDF", "*.png", "*.jpg", "*.jpeg", "*.pdf", "*.svg")
-            );
-
+            chooser.setTitle("Selecionar ficheiro de design");
             File file = chooser.showOpenDialog(null);
             if (file != null) {
-                ficheiroSelecionado = file.getName();
-                ficheiroLabel.setText(ficheiroSelecionado);
+                ficheiroField.setText(file.getAbsolutePath());
             }
         });
 
-        Button guardar = DesignerUiFactory.primaryButton("Guardar Rascunho");
-        guardar.setOnAction(e -> mostrarIndisponivel("Guardar rascunho"));
+        VBox formCard = card();
+        Label formTitle = sectionTitle("Proposta");
+        formCard.getChildren().addAll(
+                formTitle,
+                new Label("Descrição do designer"),
+                descricaoDesigner,
+                new Label("Ficheiro"),
+                new HBox(10, ficheiroField, escolherFicheiro)
+        );
+        HBox.setHgrow(ficheiroField, Priority.ALWAYS);
 
-        Button enviar = DesignerUiFactory.primaryButton("Enviar ao Cliente");
-        enviar.setOnAction(e -> mostrarIndisponivel("Enviar ao cliente"));
+        Button guardar = primaryButton("Guardar Proposta");
+        Button cancelar = secondaryButton("Cancelar");
 
-        Button cancelar = DesignerUiFactory.secondaryButton("Cancelar");
         cancelar.setOnAction(e -> shell.navigateTo(DesignerPage.PEDIDOS_DESIGN));
 
-        HBox botoes = new HBox(10, guardar, enviar, cancelar);
+        guardar.setOnAction(e -> {
+            if (descricaoDesigner.getText() == null || descricaoDesigner.getText().isBlank()) {
+                mostrarErro("Preenche a descrição da proposta.");
+                return;
+            }
 
-        uploadCard.getChildren().addAll(
-                sectionTitle("Ficheiro do Design"),
-                ficheiroLabel,
-                selecionarFicheiro,
-                botoes
-        );
+            CriarDesignEncomendaRequestDto dto = new CriarDesignEncomendaRequestDto();
+            dto.setIdEncomenda(BigDecimal.valueOf(pedido.getEncomendaId()));
+            dto.setDescricaoDesigner(descricaoDesigner.getText().trim());
+            dto.setFicheiroDesign(ficheiroField.getText() == null || ficheiroField.getText().isBlank()
+                    ? null
+                    : ficheiroField.getText().trim());
 
-        content.getChildren().addAll(topo, fichaTecnica, uploadCard);
+            guardar.setDisable(true);
+            cancelar.setDisable(true);
+            estado.setText("A guardar proposta...");
 
-        return createScrollable(content);
+            Task<DesignEncomendaDto> task = new Task<>() {
+                @Override
+                protected DesignEncomendaDto call() {
+                    return designApiService.criar(dto);
+                }
+            };
+
+            task.setOnSucceeded(event -> {
+                estado.setText("Proposta criada com sucesso.");
+                guardar.setDisable(false);
+                cancelar.setDisable(false);
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setHeaderText("Proposta criada");
+                alert.setContentText("A proposta foi enviada para decisão fictícia do cliente.");
+                alert.showAndWait();
+
+                shell.navigateTo(DesignerPage.HISTORICO);
+            });
+
+            task.setOnFailed(event -> {
+                estado.setText("Erro ao guardar proposta.");
+                guardar.setDisable(false);
+                cancelar.setDisable(false);
+                mostrarErro(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            });
+
+            Thread thread = new Thread(task);
+            thread.setDaemon(true);
+            thread.start();
+        });
+
+        HBox actions = new HBox(10, guardar, cancelar);
+
+        root.getChildren().addAll(estado, infoCard, formCard, actions);
+        return root;
     }
 
-    private Parent createScrollable(VBox content) {
-        ScrollPane scrollPane = new ScrollPane(content);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPannable(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setStyle("-fx-background: #efefef; -fx-background-color: #efefef;");
-        content.setStyle("-fx-background-color: #efefef;");
-
-        return scrollPane;
+    private void mostrarErro(String mensagem) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText("Erro");
+        alert.setContentText(mensagem);
+        alert.showAndWait();
     }
 
-    private VBox item(String label, String value) {
-        VBox box = new VBox(4);
+    private VBox pageContainer(String titleText) {
+        VBox root = new VBox(18);
+        root.setStyle("-fx-padding: 28; -fx-background-color: #efefef;");
+        Label title = new Label(titleText);
+        title.setStyle("-fx-font-size: 28; -fx-font-weight: bold;");
+        root.getChildren().add(title);
+        return root;
+    }
 
-        Label l1 = new Label(label);
-        l1.setStyle("-fx-text-fill: #666;");
-
-        Label l2 = new Label(value);
-
-        box.getChildren().addAll(l1, l2);
+    private VBox card() {
+        VBox box = new VBox(12);
+        box.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 22; -fx-border-color: #e0e0e0; -fx-border-radius: 12;");
         return box;
     }
 
@@ -199,10 +167,15 @@ public class DesignerCriarPropostaPage {
         return label;
     }
 
-    private void mostrarIndisponivel(String acao) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setHeaderText("Função ainda não disponível");
-        alert.setContentText(acao + " só vai funcionar quando ligarmos ao backend.");
-        alert.showAndWait();
+    private Button primaryButton(String text) {
+        Button button = new Button(text);
+        button.setStyle("-fx-background-color: black; -fx-text-fill: white; -fx-background-radius: 10; -fx-font-weight: bold;");
+        return button;
+    }
+
+    private Button secondaryButton(String text) {
+        Button button = new Button(text);
+        button.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-border-color: #cccccc; -fx-background-radius: 10; -fx-border-radius: 10;");
+        return button;
     }
 }

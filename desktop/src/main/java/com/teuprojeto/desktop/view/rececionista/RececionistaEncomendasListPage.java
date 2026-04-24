@@ -18,6 +18,7 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class RececionistaEncomendasListPage {
@@ -63,19 +64,29 @@ public class RececionistaEncomendasListPage {
         TableColumn<EncomendaRow, String> design = new TableColumn<>("Design");
         design.setCellValueFactory(c -> c.getValue().designProperty());
 
+        ObservableList<EncomendaRow> masterData = FXCollections.observableArrayList();
+
         TableColumn<EncomendaRow, Void> acao = new TableColumn<>("Ações");
         acao.setCellFactory(col -> new TableCell<>() {
             private final Button verBtn = new Button("Ver");
-            private final HBox box = new HBox(verBtn);
+            private final Button apagarBtn = new Button("Apagar");
+            private final HBox box = new HBox(8, verBtn, apagarBtn);
 
             {
                 box.setAlignment(Pos.CENTER);
+
                 verBtn.setStyle("-fx-background-color: white; -fx-border-color: #cfcfcf; -fx-background-radius: 6; -fx-border-radius: 6;");
+                apagarBtn.setStyle("-fx-background-color: white; -fx-border-color: #d88; -fx-text-fill: #a33; -fx-background-radius: 6; -fx-border-radius: 6;");
+
                 verBtn.setOnAction(e -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setHeaderText("Ainda não disponível");
-                    alert.setContentText("A página de detalhe da encomenda será ligada a seguir.");
-                    alert.showAndWait();
+                    EncomendaRow row = getTableView().getItems().get(getIndex());
+                    shell.setEncomendaSelecionadaId(row.getId());
+                    shell.navigateTo(RececionistaPage.ENCOMENDAS_VER);
+                });
+
+                apagarBtn.setOnAction(e -> {
+                    EncomendaRow row = getTableView().getItems().get(getIndex());
+                    confirmarEApagar(row, masterData, statusLabel, table);
                 });
             }
 
@@ -88,7 +99,6 @@ public class RececionistaEncomendasListPage {
 
         table.getColumns().addAll(numero, cliente, estado, design, acao);
 
-        ObservableList<EncomendaRow> masterData = FXCollections.observableArrayList();
         FilteredList<EncomendaRow> filtrados = new FilteredList<>(masterData, encomenda -> true);
 
         search.textProperty().addListener((obs, oldValue, newValue) -> {
@@ -120,6 +130,58 @@ public class RececionistaEncomendasListPage {
         return root;
     }
 
+    private void confirmarEApagar(EncomendaRow row,
+                                  ObservableList<EncomendaRow> masterData,
+                                  Label statusLabel,
+                                  TableView<EncomendaRow> table) {
+
+        Alert confirmacao = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacao.setHeaderText("Confirmar eliminação");
+        confirmacao.setContentText("Tem a certeza que deseja apagar a encomenda " + row.getNumero() + "?");
+
+        Optional<ButtonType> resultado = confirmacao.showAndWait();
+
+        if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
+            return;
+        }
+
+        statusLabel.setText("A apagar encomenda...");
+        table.setDisable(true);
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                encomendaApiService.apagar(row.getId());
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            table.setDisable(false);
+
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setHeaderText("Encomenda apagada");
+            ok.setContentText("A encomenda foi apagada com sucesso.");
+            ok.showAndWait();
+
+            carregarEncomendas(masterData, statusLabel, table);
+        });
+
+        task.setOnFailed(event -> {
+            table.setDisable(false);
+            statusLabel.setText("Erro ao apagar encomenda.");
+
+            Alert erro = new Alert(Alert.AlertType.ERROR);
+            erro.setHeaderText("Erro ao apagar encomenda");
+            erro.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            erro.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     private void carregarEncomendas(ObservableList<EncomendaRow> masterData, Label statusLabel, TableView<EncomendaRow> table) {
         statusLabel.setText("A carregar encomendas...");
         table.setDisable(true);
@@ -132,10 +194,15 @@ public class RececionistaEncomendasListPage {
 
                 Map<Integer, String> nomesClientes = clientes.stream()
                         .filter(c -> c.getCod() != null)
-                        .collect(Collectors.toMap(ClienteDto::getCod, ClienteDto::getNome));
+                        .collect(Collectors.toMap(
+                                ClienteDto::getCod,
+                                c -> c.getNome() == null ? "Cliente sem nome" : c.getNome(),
+                                (a, b) -> a
+                        ));
 
                 return encomendas.stream()
                         .map(encomenda -> new EncomendaRow(
+                                encomenda.getNum(),
                                 "ENC-" + encomenda.getNum(),
                                 nomesClientes.getOrDefault(encomenda.getIdcliente(), "Cliente #" + encomenda.getIdcliente()),
                                 mapearEstado(encomenda.getIdestado()),

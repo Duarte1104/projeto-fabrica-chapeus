@@ -7,5 +7,6 @@ public enum RececionistaPage {
     CLIENTES_VER,
     ENCOMENDAS_LISTAR,
     ENCOMENDAS_CRIAR,
+    ENCOMENDAS_VER,
     FATURAS
 }

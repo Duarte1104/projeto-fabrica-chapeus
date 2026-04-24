@@ -22,6 +22,7 @@ public class RececionistaShellView {
     private final Map<RececionistaPage, Button> menuButtons = new LinkedHashMap<>();
 
     private ClienteRow clienteSelecionado;
+    private Long encomendaSelecionadaId;
 
     public RececionistaShellView(MainApp app, AppUser user) {
         this.app = app;
@@ -116,6 +117,7 @@ public class RececionistaShellView {
             case CLIENTES_VER -> new RececionistaVerClientePage(this).getView();
             case ENCOMENDAS_LISTAR -> new RececionistaEncomendasListPage(this).getView();
             case ENCOMENDAS_CRIAR -> new RececionistaCriarEncomendaPage(this).getView();
+            case ENCOMENDAS_VER -> new RececionistaVerEncomendaPage(this).getView();
             case FATURAS -> new RececionistaFaturasPage(this).getView();
         };
 
@@ -132,6 +134,14 @@ public class RececionistaShellView {
 
     public void setClienteSelecionado(ClienteRow clienteSelecionado) {
         this.clienteSelecionado = clienteSelecionado;
+    }
+
+    public Long getEncomendaSelecionadaId() {
+        return encomendaSelecionadaId;
+    }
+
+    public void setEncomendaSelecionadaId(Long encomendaSelecionadaId) {
+        this.encomendaSelecionadaId = encomendaSelecionadaId;
     }
 
     private String buttonStyle(boolean active) {

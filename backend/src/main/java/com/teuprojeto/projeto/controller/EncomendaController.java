@@ -2,6 +2,7 @@ package com.teuprojeto.projeto.controller;
 
 import com.teuprojeto.projeto.dto.encomenda.CriarEncomendaRequest;
 import com.teuprojeto.projeto.entity.Encomenda;
+import com.teuprojeto.projeto.entity.LinhaEncomenda;
 import com.teuprojeto.projeto.service.EncomendaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -56,6 +57,11 @@ public class EncomendaController {
     @GetMapping("/{id}")
     public Encomenda procurarPorId(@PathVariable BigDecimal id) {
         return encomendaService.procurarPorId(id);
+    }
+
+    @GetMapping("/{id}/linhas")
+    public List<LinhaEncomenda> listarLinhas(@PathVariable BigDecimal id) {
+        return encomendaService.listarLinhas(id);
     }
 
     @DeleteMapping("/{id}")

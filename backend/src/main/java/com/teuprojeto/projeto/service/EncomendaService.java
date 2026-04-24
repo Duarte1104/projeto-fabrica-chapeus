@@ -66,7 +66,6 @@ public class EncomendaService {
         encomenda.setDescricaoDesign(request.getDescricaoDesign());
         encomenda.setIdfuncionario(null);
 
-        // 1 = AGUARDA_DESIGN | 2 = PREPARACAO
         if (Boolean.TRUE.equals(request.getDesign())) {
             encomenda.setIdestado(1L);
         } else {
@@ -111,11 +110,20 @@ public class EncomendaService {
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
     }
 
+    public List<LinhaEncomenda> listarLinhas(BigDecimal idEncomenda) {
+        Encomenda encomenda = encomendaRepository.findById(idEncomenda)
+                .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
+
+        return linhaEncomendaRepository.findByNumencomenda(encomenda.getNum());
+    }
+
+    @Transactional
     public void apagar(BigDecimal id) {
-        if (!encomendaRepository.existsById(id)) {
-            throw new IllegalArgumentException("Encomenda não encontrada.");
-        }
-        encomendaRepository.deleteById(id);
+        Encomenda encomenda = encomendaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
+
+        linhaEncomendaRepository.deleteByNumencomenda(encomenda.getNum());
+        encomendaRepository.delete(encomenda);
     }
 
     @Transactional

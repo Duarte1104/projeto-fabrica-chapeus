@@ -82,9 +82,9 @@ public class RececionistaCriarEncomendaPage {
         Button adicionarLinhaBtn = RececionistaUiFactory.secondaryButton("+ Adicionar Linha");
         adicionarLinhaBtn.setOnAction(e -> adicionarLinha(linhasBox));
 
-        VBox clienteCard = RececionistaUiFactory.createCard();
-        Label clienteTitulo = new Label("Dados da Encomenda");
-        clienteTitulo.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        VBox dadosCard = RececionistaUiFactory.createCard();
+        Label dadosTitulo = new Label("Dados da Encomenda");
+        dadosTitulo.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
 
         HBox linhaClienteEntrega = new HBox(16,
                 criarCampoBox("Cliente", clienteBox),
@@ -93,9 +93,9 @@ public class RececionistaCriarEncomendaPage {
         HBox.setHgrow(linhaClienteEntrega.getChildren().get(0), Priority.ALWAYS);
         HBox.setHgrow(linhaClienteEntrega.getChildren().get(1), Priority.ALWAYS);
 
-        clienteCard.getChildren().addAll(
+        dadosCard.getChildren().addAll(
                 estado,
-                clienteTitulo,
+                dadosTitulo,
                 linhaClienteEntrega
         );
 
@@ -132,7 +132,7 @@ public class RececionistaCriarEncomendaPage {
 
         HBox botoes = new HBox(10, guardar, cancelar);
 
-        VBox content = new VBox(18, clienteCard, linhasCard, designCard, botoes);
+        VBox content = new VBox(18, dadosCard, linhasCard, designCard, botoes);
 
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
@@ -152,10 +152,8 @@ public class RececionistaCriarEncomendaPage {
         label.setStyle("-fx-font-size: 14; -fx-text-fill: #333333;");
 
         control.setMaxWidth(Double.MAX_VALUE);
-        VBox.setVgrow(control, Priority.NEVER);
 
         box.getChildren().addAll(label, control);
-        VBox.setVgrow(box, Priority.NEVER);
         HBox.setHgrow(box, Priority.ALWAYS);
         return box;
     }
@@ -167,7 +165,6 @@ public class RececionistaCriarEncomendaPage {
         removerBtn.setOnAction(e -> linhasBox.getChildren().remove(linha.root));
 
         linha.root.getChildren().add(removerBtn);
-
         linhasBox.getChildren().add(linha.root);
     }
 
@@ -213,7 +210,6 @@ public class RececionistaCriarEncomendaPage {
 
         task.setOnFailed(event -> {
             estado.setText("Erro ao carregar dados.");
-
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Erro");
             alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
