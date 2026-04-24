@@ -32,4 +32,20 @@ public class EncomendaRow {
     public StringProperty designProperty() {
         return design;
     }
+
+    public String getNumero() {
+        return numero.get();
+    }
+
+    public String getCliente() {
+        return cliente.get();
+    }
+
+    public String getEstado() {
+        return estado.get();
+    }
+
+    public String getDesign() {
+        return design.get();
+    }
 }

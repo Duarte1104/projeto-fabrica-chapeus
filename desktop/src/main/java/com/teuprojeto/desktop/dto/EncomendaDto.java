@@ -1,7 +1,10 @@
 package com.teuprojeto.desktop.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.math.BigDecimal;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EncomendaDto {
 
     private Long num;
@@ -12,6 +15,7 @@ public class EncomendaDto {
     private BigDecimal valortotal;
     private Long idestado;
     private Integer idcliente;
+    private Long idfuncionario;
     private Boolean design;
     private String descricaoDesign;
 
@@ -80,6 +84,14 @@ public class EncomendaDto {
 
     public void setIdcliente(Integer idcliente) {
         this.idcliente = idcliente;
+    }
+
+    public Long getIdfuncionario() {
+        return idfuncionario;
+    }
+
+    public void setIdfuncionario(Long idfuncionario) {
+        this.idfuncionario = idfuncionario;
     }
 
     public Boolean getDesign() {

@@ -1,18 +1,17 @@
-package com.teuprojeto.projeto.dto.encomenda;
+package com.teuprojeto.desktop.dto;
 
-import java.time.LocalDate;
 import java.util.List;
 
-public class CriarEncomendaRequest {
+public class CriarEncomendaRequestDto {
 
     private Integer idCliente;
-    private LocalDate dataEntrega;
+    private String dataEntrega;
     private String observacoes;
     private Boolean design;
     private String descricaoDesign;
-    private List<LinhaEncomendaRequest> linhas;
+    private List<LinhaEncomendaRequestDto> linhas;
 
-    public CriarEncomendaRequest() {
+    public CriarEncomendaRequestDto() {
     }
 
     public Integer getIdCliente() {
@@ -23,11 +22,11 @@ public class CriarEncomendaRequest {
         this.idCliente = idCliente;
     }
 
-    public LocalDate getDataEntrega() {
+    public String getDataEntrega() {
         return dataEntrega;
     }
 
-    public void setDataEntrega(LocalDate dataEntrega) {
+    public void setDataEntrega(String dataEntrega) {
         this.dataEntrega = dataEntrega;
     }
 
@@ -55,11 +54,11 @@ public class CriarEncomendaRequest {
         this.descricaoDesign = descricaoDesign;
     }
 
-    public List<LinhaEncomendaRequest> getLinhas() {
+    public List<LinhaEncomendaRequestDto> getLinhas() {
         return linhas;
     }
 
-    public void setLinhas(List<LinhaEncomendaRequest> linhas) {
+    public void setLinhas(List<LinhaEncomendaRequestDto> linhas) {
         this.linhas = linhas;
     }
 }
