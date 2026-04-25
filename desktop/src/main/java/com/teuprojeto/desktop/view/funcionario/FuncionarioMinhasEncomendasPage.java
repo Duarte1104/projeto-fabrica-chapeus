@@ -1,19 +1,19 @@
 package com.teuprojeto.desktop.view.funcionario;
 
+import com.teuprojeto.desktop.service.FuncionarioDataService;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FuncionarioMinhasEncomendasPage {
 
     private final FuncionarioShellView shell;
+    private final FuncionarioDataService funcionarioDataService = new FuncionarioDataService();
 
     public FuncionarioMinhasEncomendasPage(FuncionarioShellView shell) {
         this.shell = shell;
@@ -26,28 +26,64 @@ public class FuncionarioMinhasEncomendasPage {
         search.setPromptText("Pesquisar encomenda...");
         search.setMaxWidth(380);
 
+        Label estado = new Label("A carregar encomendas...");
+        estado.setStyle("-fx-text-fill: #666666;");
+
         VBox lista = FuncionarioUiFactory.createCard();
         lista.getChildren().addAll(new Label("Encomendas atribuídas ao funcionário"));
 
-        for (FuncionarioEncomendaRow encomenda : MockFuncionarioData.getEncomendas()) {
-            if (matches(search.getText(), encomenda)) {
-                lista.getChildren().add(buildCard(encomenda));
-            }
-        }
+        List<FuncionarioEncomendaRow> cache = new ArrayList<>();
 
-        search.textProperty().addListener((obs, oldValue, newValue) -> {
-            lista.getChildren().clear();
-            lista.getChildren().add(new Label("Encomendas atribuídas ao funcionário"));
+        search.textProperty().addListener((obs, oldValue, newValue) -> atualizarLista(lista, cache, newValue));
 
-            for (FuncionarioEncomendaRow encomenda : MockFuncionarioData.getEncomendas()) {
-                if (matches(newValue, encomenda)) {
-                    lista.getChildren().add(buildCard(encomenda));
-                }
+        root.getChildren().addAll(search, estado, lista);
+
+        Task<List<FuncionarioEncomendaRow>> task = new Task<>() {
+            @Override
+            protected List<FuncionarioEncomendaRow> call() {
+                return funcionarioDataService.carregarMinhasEncomendas(shell.getFuncionarioId());
             }
+        };
+
+        task.setOnSucceeded(event -> {
+            cache.clear();
+            cache.addAll(task.getValue());
+            atualizarLista(lista, cache, search.getText());
+            estado.setText("Encomendas carregadas: " + cache.size());
         });
 
-        root.getChildren().addAll(search, lista);
+        task.setOnFailed(event -> {
+            estado.setText("Erro ao carregar encomendas.");
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Erro");
+            alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            alert.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+
         return FuncionarioUiFactory.wrapInScroll(root);
+    }
+
+    private void atualizarLista(VBox lista, List<FuncionarioEncomendaRow> encomendas, String termo) {
+        lista.getChildren().clear();
+        lista.getChildren().add(new Label("Encomendas atribuídas ao funcionário"));
+
+        List<FuncionarioEncomendaRow> filtradas = encomendas.stream()
+                .filter(e -> matches(termo, e))
+                .toList();
+
+        if (filtradas.isEmpty()) {
+            lista.getChildren().add(new Label("Nenhuma encomenda encontrada."));
+            return;
+        }
+
+        for (FuncionarioEncomendaRow encomenda : filtradas) {
+            lista.getChildren().add(buildCard(encomenda));
+        }
     }
 
     private boolean matches(String termo, FuncionarioEncomendaRow encomenda) {
@@ -57,10 +93,10 @@ public class FuncionarioMinhasEncomendasPage {
 
         String t = termo.toLowerCase().trim();
 
-        return encomenda.getCodigoOrdem().toLowerCase().contains(t)
-                || encomenda.getCodigoEncomenda().toLowerCase().contains(t)
+        return encomenda.getCodigoEncomenda().toLowerCase().contains(t)
                 || encomenda.getProduto().toLowerCase().contains(t)
-                || encomenda.getCliente().toLowerCase().contains(t);
+                || encomenda.getCliente().toLowerCase().contains(t)
+                || encomenda.getEstado().toLowerCase().contains(t);
     }
 
     private VBox buildCard(FuncionarioEncomendaRow encomenda) {
@@ -75,6 +111,9 @@ public class FuncionarioMinhasEncomendasPage {
         produto.setStyle("-fx-font-size: 20; -fx-font-weight: bold;");
 
         Label prioridade = badge(encomenda.getPrioridade(), "#fff7ed", "#ea580c");
+        Label estado = badge(encomenda.getEstado(),
+                encomenda.isConcluida() ? "#dcfce7" : "#eff6ff",
+                encomenda.isConcluida() ? "#15803d" : "#1d4ed8");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -85,12 +124,19 @@ public class FuncionarioMinhasEncomendasPage {
             shell.navigateTo(FuncionarioPage.ATUALIZAR_PRODUCAO);
         });
 
-        top.getChildren().addAll(produto, prioridade, spacer, atualizar);
+        Button materiais = FuncionarioUiFactory.secondaryButton("Gastos Material");
+        materiais.setOnAction(e -> {
+            shell.setEncomendaSelecionada(encomenda);
+            shell.navigateTo(FuncionarioPage.GASTOS_MATERIAL);
+        });
 
-        Label ordem = new Label("Ordem: " + encomenda.getCodigoOrdem() + " | Encomenda: " + encomenda.getCodigoEncomenda());
+        top.getChildren().addAll(produto, prioridade, estado, spacer, atualizar, materiais);
+
+        Label encomendaLabel = new Label("Encomenda: " + encomenda.getCodigoEncomenda());
         Label cliente = new Label("Cliente: " + encomenda.getCliente());
+        Label quantidade = new Label("Quantidade total: " + encomenda.getQuantidadeTotal());
 
-        Label progresso = new Label("Progresso:");
+        Label progresso = new Label("Progresso: " + encomenda.getResumoEtapas());
         ProgressBar bar = new ProgressBar(encomenda.getProgresso());
         bar.setPrefWidth(1000);
         bar.setStyle("-fx-accent: #111827;");
@@ -98,16 +144,12 @@ public class FuncionarioMinhasEncomendasPage {
         HBox info = new HBox();
         info.setAlignment(Pos.CENTER_LEFT);
 
-        Label unidades = new Label(encomenda.getUnidadesConcluidas() + " / " + encomenda.getQuantidadeTotal() + " unidades");
-        Region spacer2 = new Region();
-        HBox.setHgrow(spacer2, Priority.ALWAYS);
-
-        Label prazo = new Label(encomenda.getDataLimite());
+        Label prazo = new Label("Data limite: " + encomenda.getDataLimite());
         prazo.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
 
-        info.getChildren().addAll(unidades, spacer2, prazo);
+        info.getChildren().addAll(prazo);
 
-        card.getChildren().addAll(top, ordem, cliente, progresso, bar, info);
+        card.getChildren().addAll(top, encomendaLabel, cliente, quantidade, progresso, bar, info);
         return card;
     }
 

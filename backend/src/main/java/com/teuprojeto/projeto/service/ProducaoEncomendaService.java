@@ -27,7 +27,7 @@ public class ProducaoEncomendaService {
 
     @Transactional
     public ProducaoEncomenda atualizar(AtualizarProducaoEncomendaRequest request) {
-        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda())
+        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda().longValue())
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
         if (!Long.valueOf(2L).equals(encomenda.getIdestado())) {

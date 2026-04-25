@@ -130,6 +130,13 @@ public class FuncionarioShellView {
         this.encomendaSelecionada = encomendaSelecionada;
     }
 
+    public Long getFuncionarioId() {
+        if (user.getEmail() != null && user.getEmail().equalsIgnoreCase("funcionario@email.com")) {
+            return 1L;
+        }
+        return 1L;
+    }
+
     private String buttonStyle(boolean active) {
         if (active) {
             return "-fx-background-color: white; " +

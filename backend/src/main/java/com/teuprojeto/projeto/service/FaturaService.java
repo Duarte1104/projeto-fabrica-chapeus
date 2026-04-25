@@ -31,7 +31,7 @@ public class FaturaService {
 
     @Transactional
     public Fatura criar(CriarFaturaRequest request) {
-        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda())
+        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda().longValue())
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
         if (!Long.valueOf(3L).equals(encomenda.getIdestado())) {
