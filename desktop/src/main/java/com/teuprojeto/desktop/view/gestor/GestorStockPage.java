@@ -1,7 +1,12 @@
 package com.teuprojeto.desktop.view.gestor;
 
+import com.teuprojeto.desktop.dto.MaterialDto;
+import com.teuprojeto.desktop.service.MaterialApiService;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -9,9 +14,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+
 public class GestorStockPage {
 
     private final GestorShellView shell;
+    private final MaterialApiService materialApiService = new MaterialApiService();
 
     public GestorStockPage(GestorShellView shell) {
         this.shell = shell;
@@ -21,7 +29,6 @@ public class GestorStockPage {
         VBox root = GestorUiFactory.createPageContainer("Consultar Stock");
 
         HBox actions = new HBox(10);
-
         TextField search = new TextField();
         search.setPromptText("Pesquisar material...");
         HBox.setHgrow(search, Priority.ALWAYS);
@@ -29,7 +36,11 @@ public class GestorStockPage {
         Button novoMaterial = GestorUiFactory.primaryButton("Novo Material");
         novoMaterial.setOnAction(e -> shell.navigateTo(GestorPage.NOVO_MATERIAL));
 
-        actions.getChildren().addAll(search, novoMaterial);
+        Button atualizar = GestorUiFactory.secondaryButton("Atualizar");
+        actions.getChildren().addAll(search, novoMaterial, atualizar);
+
+        Label status = new Label("A carregar materiais...");
+        status.setStyle("-fx-text-fill: #666666;");
 
         TableView<MaterialRow> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -64,7 +75,6 @@ public class GestorStockPage {
             @Override
             protected void updateItem(String value, boolean empty) {
                 super.updateItem(value, empty);
-
                 if (empty || value == null) {
                     setGraphic(null);
                     return;
@@ -107,7 +117,8 @@ public class GestorStockPage {
 
         table.getColumns().addAll(nome, stockAtual, stockMinimo, unidade, custo, estado, acao);
 
-        FilteredList<MaterialRow> filtrados = new FilteredList<>(MockGestorData.getMateriais(), material -> true);
+        ObservableList<MaterialRow> masterData = FXCollections.observableArrayList();
+        FilteredList<MaterialRow> filtrados = new FilteredList<>(masterData, material -> true);
 
         search.textProperty().addListener((obs, oldValue, newValue) -> {
             String termo = newValue == null ? "" : newValue.trim().toLowerCase();
@@ -128,10 +139,58 @@ public class GestorStockPage {
         ordenados.comparatorProperty().bind(table.comparatorProperty());
         table.setItems(ordenados);
 
+        atualizar.setOnAction(e -> carregarMateriais(masterData, status, table));
+        carregarMateriais(masterData, status, table);
+
         VBox card = GestorUiFactory.createCard();
-        card.getChildren().addAll(actions, table);
+        card.getChildren().addAll(actions, status, table);
 
         root.getChildren().add(card);
         return root;
+    }
+
+    private void carregarMateriais(ObservableList<MaterialRow> masterData, Label status, TableView<MaterialRow> table) {
+        status.setText("A carregar materiais...");
+        table.setDisable(true);
+
+        Task<List<MaterialRow>> task = new Task<>() {
+            @Override
+            protected List<MaterialRow> call() {
+                return materialApiService.listarTodos().stream()
+                        .map(this::toRow)
+                        .toList();
+            }
+
+            private MaterialRow toRow(MaterialDto dto) {
+                return new MaterialRow(
+                        dto.getId(),
+                        dto.getNome(),
+                        dto.getStockAtual() == null ? 0 : dto.getStockAtual().doubleValue(),
+                        dto.getStockMinimo() == null ? 0 : dto.getStockMinimo().doubleValue(),
+                        dto.getUnidade() == null ? "" : dto.getUnidade(),
+                        dto.getCustoUnitario() == null ? 0 : dto.getCustoUnitario().doubleValue()
+                );
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            masterData.setAll(task.getValue());
+            status.setText("Materiais carregados: " + masterData.size());
+            table.setDisable(false);
+        });
+
+        task.setOnFailed(event -> {
+            status.setText("Erro ao carregar materiais.");
+            table.setDisable(false);
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Erro");
+            alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            alert.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 }

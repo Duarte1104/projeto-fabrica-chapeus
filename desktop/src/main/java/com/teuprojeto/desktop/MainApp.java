@@ -4,6 +4,7 @@ import com.teuprojeto.desktop.model.AppUser;
 import com.teuprojeto.desktop.view.DashboardView;
 import com.teuprojeto.desktop.view.LoginView;
 import com.teuprojeto.desktop.view.RegisterView;
+import com.teuprojeto.desktop.view.admin.AdminShellView;
 import com.teuprojeto.desktop.view.designer.DesignerShellView;
 import com.teuprojeto.desktop.view.funcionario.FuncionarioShellView;
 import com.teuprojeto.desktop.view.gestor.GestorShellView;
@@ -35,6 +36,12 @@ public class MainApp extends Application {
     }
 
     public void showDashboard(AppUser user) {
+        if (user.getRole().name().equals("ADMIN")) {
+            Scene scene = new Scene(new AdminShellView(this, user).getView(), 1280, 820);
+            stage.setScene(scene);
+            return;
+        }
+
         if (user.getRole().name().equals("RECECIONISTA")) {
             Scene scene = new Scene(new RececionistaShellView(this, user).getView(), 1280, 820);
             stage.setScene(scene);
