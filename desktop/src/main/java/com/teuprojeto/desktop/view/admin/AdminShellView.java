@@ -2,17 +2,25 @@ package com.teuprojeto.desktop.view.admin;
 
 import com.teuprojeto.desktop.MainApp;
 import com.teuprojeto.desktop.model.AppUser;
+import com.teuprojeto.desktop.view.ProfileDialogUtil;
+import com.teuprojeto.desktop.view.common.AppTopBar;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class AdminShellView {
 
     private final MainApp app;
     private final AppUser user;
+
+    private final BorderPane root = new BorderPane();
+    private final StackPane contentArea = new StackPane();
+    private final Map<AdminPage, Button> menuButtons = new LinkedHashMap<>();
 
     public AdminShellView(MainApp app, AppUser user) {
         this.app = app;
@@ -20,8 +28,24 @@ public class AdminShellView {
     }
 
     public Parent getView() {
-        BorderPane root = new BorderPane();
+        root.setLeft(buildSidebar());
+        root.setTop(
+                AppTopBar.create(
+                        user,
+                        "Admin",
+                        () -> ProfileDialogUtil.abrirAlterarPassword(user),
+                        () -> app.showLogin()
+                )
+        );
+        root.setCenter(contentArea);
 
+        contentArea.setStyle("-fx-background-color: #efefef;");
+        setPage(AdminPage.CRIAR_UTILIZADOR);
+
+        return root;
+    }
+
+    private VBox buildSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPrefWidth(230);
         sidebar.setStyle("-fx-background-color: linear-gradient(to bottom, #14245c, #1d38b8);");
@@ -37,33 +61,69 @@ public class AdminShellView {
 
         brandBox.getChildren().addAll(brand, subtitle);
 
+        VBox menuBox = new VBox(14);
+        menuBox.setPadding(new Insets(28, 18, 18, 18));
+
+        addMenuButton(menuBox, "Criar Utilizador", AdminPage.CRIAR_UTILIZADOR);
+        addMenuButton(menuBox, "Utilizadores", AdminPage.UTILIZADORES);
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
         Button logoutBtn = new Button("Logout");
         logoutBtn.setMaxWidth(Double.MAX_VALUE);
         logoutBtn.setPrefHeight(42);
         logoutBtn.setOnAction(e -> app.showLogin());
         logoutBtn.setStyle("-fx-background-color: rgba(255,255,255,0.12); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 12;");
 
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
         VBox bottomBox = new VBox(logoutBtn);
         bottomBox.setPadding(new Insets(12, 18, 22, 18));
 
-        sidebar.getChildren().addAll(brandBox, spacer, bottomBox);
+        sidebar.getChildren().addAll(brandBox, menuBox, spacer, bottomBox);
+        return sidebar;
+    }
 
-        HBox topbar = new HBox();
-        topbar.setAlignment(Pos.CENTER_RIGHT);
-        topbar.setPadding(new Insets(18, 24, 18, 24));
-        topbar.setStyle("-fx-background-color: white; -fx-border-color: #d8d8d8; -fx-border-width: 0 0 1 0;");
+    private void addMenuButton(VBox parent, String text, AdminPage page) {
+        Button btn = new Button(text);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setPrefHeight(44);
+        btn.setStyle(buttonStyle(false));
+        btn.setOnAction(e -> setPage(page));
 
-        Label userLabel = new Label(user.getEmail() + "  |  Admin");
-        userLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #222;");
-        topbar.getChildren().add(userLabel);
+        menuButtons.put(page, btn);
+        parent.getChildren().add(btn);
+    }
 
-        root.setLeft(sidebar);
-        root.setTop(topbar);
-        root.setCenter(new AdminCriarUtilizadorPage().getView());
+    private void setPage(AdminPage page) {
+        for (Map.Entry<AdminPage, Button> entry : menuButtons.entrySet()) {
+            entry.getValue().setStyle(buttonStyle(entry.getKey() == page));
+        }
 
-        return root;
+        Parent pageView = switch (page) {
+            case CRIAR_UTILIZADOR -> new AdminCriarUtilizadorPage(this).getView();
+            case UTILIZADORES -> new AdminUtilizadoresPage(this).getView();
+        };
+
+        contentArea.getChildren().setAll(pageView);
+    }
+
+    public void navigateTo(AdminPage page) {
+        setPage(page);
+    }
+
+    private String buttonStyle(boolean active) {
+        if (active) {
+            return "-fx-background-color: white; " +
+                    "-fx-text-fill: #16235c; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-background-radius: 12; " +
+                    "-fx-cursor: hand;";
+        }
+
+        return "-fx-background-color: rgba(255,255,255,0.12); " +
+                "-fx-text-fill: white; " +
+                "-fx-font-weight: bold; " +
+                "-fx-background-radius: 12; " +
+                "-fx-cursor: hand;";
     }
 }

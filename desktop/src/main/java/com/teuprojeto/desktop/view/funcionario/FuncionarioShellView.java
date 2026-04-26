@@ -2,8 +2,9 @@ package com.teuprojeto.desktop.view.funcionario;
 
 import com.teuprojeto.desktop.MainApp;
 import com.teuprojeto.desktop.model.AppUser;
+import com.teuprojeto.desktop.view.ProfileDialogUtil;
+import com.teuprojeto.desktop.view.common.AppTopBar;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -80,16 +81,12 @@ public class FuncionarioShellView {
     }
 
     private HBox buildTopbar() {
-        HBox topbar = new HBox();
-        topbar.setAlignment(Pos.CENTER_RIGHT);
-        topbar.setPadding(new Insets(18, 24, 18, 24));
-        topbar.setStyle("-fx-background-color: white; -fx-border-color: #d8d8d8; -fx-border-width: 0 0 1 0;");
-
-        Label userLabel = new Label(user.getEmail() + "  |  Funcionário");
-        userLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #222;");
-        topbar.getChildren().add(userLabel);
-
-        return topbar;
+        return AppTopBar.create(
+                user,
+                "Funcionário",
+                () -> ProfileDialogUtil.abrirAlterarPassword(user),
+                () -> app.showLogin()
+        );
     }
 
     private void addMenuButton(VBox parent, String text, FuncionarioPage page) {

@@ -40,7 +40,7 @@ public class RececionistaVerEncomendaPage {
             voltar.setOnAction(e -> shell.navigateTo(RececionistaPage.ENCOMENDAS_LISTAR));
             card.getChildren().addAll(aviso, voltar);
             root.getChildren().add(card);
-            return root;
+            return criarScroll(root);
         }
 
         Label estado = new Label("A carregar encomenda...");
@@ -74,6 +74,7 @@ public class RececionistaVerEncomendaPage {
 
         TableView<LinhaViewRow> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        table.setPrefHeight(250);
 
         TableColumn<LinhaViewRow, String> chapeuCol = new TableColumn<>("Chapéu");
         chapeuCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getChapeu()));
@@ -109,7 +110,18 @@ public class RececionistaVerEncomendaPage {
                 table
         );
 
-        return root;
+        return criarScroll(root);
+    }
+
+    private Parent criarScroll(VBox root) {
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle("-fx-background: #efefef; -fx-background-color: #efefef;");
+        root.setStyle("-fx-background-color: #efefef;");
+        return scrollPane;
     }
 
     private void carregarDados(Long encomendaId,
