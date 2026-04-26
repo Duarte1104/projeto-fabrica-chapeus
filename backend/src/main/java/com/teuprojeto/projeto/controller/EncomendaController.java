@@ -7,7 +7,6 @@ import com.teuprojeto.projeto.service.EncomendaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -48,31 +47,31 @@ public class EncomendaController {
 
     @PatchMapping("/{id}/aceitar/{idFuncionario}")
     public Encomenda aceitarEncomenda(
-            @PathVariable BigDecimal id,
+            @PathVariable Long id,
             @PathVariable Long idFuncionario
     ) {
         return encomendaService.aceitarEncomenda(id, idFuncionario);
     }
 
     @GetMapping("/{id}")
-    public Encomenda procurarPorId(@PathVariable BigDecimal id) {
+    public Encomenda procurarPorId(@PathVariable Long id) {
         return encomendaService.procurarPorId(id);
     }
 
     @GetMapping("/{id}/linhas")
-    public List<LinhaEncomenda> listarLinhas(@PathVariable BigDecimal id) {
+    public List<LinhaEncomenda> listarLinhas(@PathVariable Long id) {
         return encomendaService.listarLinhas(id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void apagar(@PathVariable BigDecimal id) {
+    public void apagar(@PathVariable Long id) {
         encomendaService.apagar(id);
     }
 
     @PatchMapping("/{id}/estado/{idNovoEstado}")
     public Encomenda mudarEstado(
-            @PathVariable BigDecimal id,
+            @PathVariable Long id,
             @PathVariable Long idNovoEstado
     ) {
         return encomendaService.mudarEstado(id, idNovoEstado);

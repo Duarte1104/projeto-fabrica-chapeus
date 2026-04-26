@@ -4,15 +4,15 @@ import javafx.beans.property.*;
 
 public class MaterialRow {
 
-    private final LongProperty id;
+    private final Long id;
     private final StringProperty nome;
     private final DoubleProperty stockAtual;
     private final DoubleProperty stockMinimo;
     private final StringProperty unidade;
     private final DoubleProperty custoUnitario;
 
-    public MaterialRow(long id, String nome, double stockAtual, double stockMinimo, String unidade, double custoUnitario) {
-        this.id = new SimpleLongProperty(id);
+    public MaterialRow(Long id, String nome, double stockAtual, double stockMinimo, String unidade, double custoUnitario) {
+        this.id = id;
         this.nome = new SimpleStringProperty(nome);
         this.stockAtual = new SimpleDoubleProperty(stockAtual);
         this.stockMinimo = new SimpleDoubleProperty(stockMinimo);
@@ -20,32 +20,12 @@ public class MaterialRow {
         this.custoUnitario = new SimpleDoubleProperty(custoUnitario);
     }
 
-    public LongProperty idProperty() {
+    public MaterialRow(long id, String nome, double stockAtual, double stockMinimo, String unidade, double custoUnitario) {
+        this(Long.valueOf(id), nome, stockAtual, stockMinimo, unidade, custoUnitario);
+    }
+
+    public Long getId() {
         return id;
-    }
-
-    public StringProperty nomeProperty() {
-        return nome;
-    }
-
-    public DoubleProperty stockAtualProperty() {
-        return stockAtual;
-    }
-
-    public DoubleProperty stockMinimoProperty() {
-        return stockMinimo;
-    }
-
-    public StringProperty unidadeProperty() {
-        return unidade;
-    }
-
-    public DoubleProperty custoUnitarioProperty() {
-        return custoUnitario;
-    }
-
-    public long getId() {
-        return id.get();
     }
 
     public String getNome() {
@@ -68,23 +48,23 @@ public class MaterialRow {
         return custoUnitario.get();
     }
 
-    public void setNome(String nome) {
-        this.nome.set(nome);
+    public StringProperty nomeProperty() {
+        return nome;
     }
 
-    public void setStockAtual(double stockAtual) {
-        this.stockAtual.set(stockAtual);
+    public DoubleProperty stockAtualProperty() {
+        return stockAtual;
     }
 
-    public void setStockMinimo(double stockMinimo) {
-        this.stockMinimo.set(stockMinimo);
+    public DoubleProperty stockMinimoProperty() {
+        return stockMinimo;
     }
 
-    public void setUnidade(String unidade) {
-        this.unidade.set(unidade);
+    public StringProperty unidadeProperty() {
+        return unidade;
     }
 
-    public void setCustoUnitario(double custoUnitario) {
-        this.custoUnitario.set(custoUnitario);
+    public DoubleProperty custoUnitarioProperty() {
+        return custoUnitario;
     }
 }

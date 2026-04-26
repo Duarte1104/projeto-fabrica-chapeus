@@ -26,26 +26,15 @@ public class EncomendaApiService {
     }
 
     public List<EncomendaDto> listarEncomendas() {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(ApiConfig.BASE_URL + "/encomendas"))
-                .GET()
-                .header("Accept", "application/json")
-                .build();
+        return listarLista("/encomendas", "Não foi possível obter as encomendas do backend.");
+    }
 
-        try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    public List<EncomendaDto> listarDisponiveisParaFuncionario() {
+        return listarLista("/encomendas/disponiveis", "Não foi possível obter as encomendas disponíveis.");
+    }
 
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new RuntimeException("Erro ao listar encomendas. HTTP " + response.statusCode());
-            }
-
-            return objectMapper.readValue(response.body(), new TypeReference<>() {});
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Não foi possível obter as encomendas do backend.", e);
-        } catch (IOException e) {
-            throw new RuntimeException("Não foi possível obter as encomendas do backend.", e);
-        }
+    public List<EncomendaDto> listarPorFuncionario(Long idFuncionario) {
+        return listarLista("/encomendas/funcionario/" + idFuncionario, "Não foi possível obter as encomendas do funcionário.");
     }
 
     public EncomendaDto procurarPorId(Long id) {
@@ -91,6 +80,33 @@ public class EncomendaApiService {
             throw new RuntimeException("Não foi possível obter as linhas da encomenda.", e);
         } catch (IOException e) {
             throw new RuntimeException("Não foi possível obter as linhas da encomenda.", e);
+        }
+    }
+
+    public EncomendaDto aceitarEncomenda(Long idEncomenda, Long idFuncionario) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ApiConfig.BASE_URL + "/encomendas/" + idEncomenda + "/aceitar/" + idFuncionario))
+                .method("PATCH", HttpRequest.BodyPublishers.noBody())
+                .header("Accept", "application/json")
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                String erro = response.body() == null || response.body().isBlank()
+                        ? "Erro ao aceitar encomenda. HTTP " + response.statusCode()
+                        : response.body();
+
+                throw new RuntimeException(erro);
+            }
+
+            return objectMapper.readValue(response.body(), EncomendaDto.class);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Não foi possível aceitar a encomenda.", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Não foi possível aceitar a encomenda.", e);
         }
     }
 
@@ -165,6 +181,29 @@ public class EncomendaApiService {
             throw new RuntimeException("Não foi possível criar a encomenda no backend.", e);
         } catch (IOException e) {
             throw new RuntimeException("Não foi possível criar a encomenda no backend.", e);
+        }
+    }
+
+    private List<EncomendaDto> listarLista(String path, String errorMessage) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ApiConfig.BASE_URL + path))
+                .GET()
+                .header("Accept", "application/json")
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("Erro HTTP " + response.statusCode());
+            }
+
+            return objectMapper.readValue(response.body(), new TypeReference<>() {});
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(errorMessage, e);
+        } catch (IOException e) {
+            throw new RuntimeException(errorMessage, e);
         }
     }
 }

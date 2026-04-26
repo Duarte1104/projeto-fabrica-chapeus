@@ -28,7 +28,7 @@ public class DesignEncomendaService {
 
     @Transactional
     public DesignEncomenda criar(CriarDesignEncomendaRequest request) {
-        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda())
+        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda().longValue())
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
         if (encomenda.getDesign() == null || !encomenda.getDesign()) {
@@ -71,7 +71,7 @@ public class DesignEncomendaService {
         DesignEncomenda designGuardado = designEncomendaRepository.save(design);
 
         if ("APROVADO_CLIENTE".equalsIgnoreCase(novoEstado)) {
-            Encomenda encomenda = encomendaRepository.findById(design.getIdEncomenda())
+            Encomenda encomenda = encomendaRepository.findById(design.getIdEncomenda().longValue())
                     .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
             encomenda.setIdestado(2L); // PREPARACAO
             encomendaRepository.save(encomenda);

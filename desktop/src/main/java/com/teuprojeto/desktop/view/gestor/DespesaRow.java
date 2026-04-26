@@ -8,41 +8,17 @@ public class DespesaRow {
     private final StringProperty codigo;
     private final StringProperty data;
     private final StringProperty produto;
+    private final StringProperty quantidade;
     private final StringProperty descricao;
-    private final StringProperty fornecedor;
     private final StringProperty valor;
 
-    public DespesaRow(String codigo, String data, String produto, String descricao, String fornecedor, String valor) {
+    public DespesaRow(String codigo, String data, String produto, String quantidade, String descricao, String valor) {
         this.codigo = new SimpleStringProperty(codigo);
         this.data = new SimpleStringProperty(data);
         this.produto = new SimpleStringProperty(produto);
+        this.quantidade = new SimpleStringProperty(quantidade);
         this.descricao = new SimpleStringProperty(descricao);
-        this.fornecedor = new SimpleStringProperty(fornecedor);
         this.valor = new SimpleStringProperty(valor);
-    }
-
-    public StringProperty codigoProperty() {
-        return codigo;
-    }
-
-    public StringProperty dataProperty() {
-        return data;
-    }
-
-    public StringProperty produtoProperty() {
-        return produto;
-    }
-
-    public StringProperty descricaoProperty() {
-        return descricao;
-    }
-
-    public StringProperty fornecedorProperty() {
-        return fornecedor;
-    }
-
-    public StringProperty valorProperty() {
-        return valor;
     }
 
     public String getCodigo() {
@@ -57,15 +33,39 @@ public class DespesaRow {
         return produto.get();
     }
 
+    public String getQuantidade() {
+        return quantidade.get();
+    }
+
     public String getDescricao() {
         return descricao.get();
     }
 
-    public String getFornecedor() {
-        return fornecedor.get();
-    }
-
     public String getValor() {
         return valor.get();
+    }
+
+    public StringProperty codigoProperty() {
+        return codigo;
+    }
+
+    public StringProperty dataProperty() {
+        return data;
+    }
+
+    public StringProperty produtoProperty() {
+        return produto;
+    }
+
+    public StringProperty quantidadeProperty() {
+        return quantidade;
+    }
+
+    public StringProperty descricaoProperty() {
+        return descricao;
+    }
+
+    public StringProperty valorProperty() {
+        return valor;
     }
 }

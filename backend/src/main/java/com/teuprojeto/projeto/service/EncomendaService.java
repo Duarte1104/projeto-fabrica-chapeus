@@ -105,12 +105,12 @@ public class EncomendaService {
         return encomendaRepository.findByIdfuncionario(idFuncionario);
     }
 
-    public Encomenda procurarPorId(BigDecimal id) {
+    public Encomenda procurarPorId(Long id) {
         return encomendaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
     }
 
-    public List<LinhaEncomenda> listarLinhas(BigDecimal idEncomenda) {
+    public List<LinhaEncomenda> listarLinhas(Long idEncomenda) {
         Encomenda encomenda = encomendaRepository.findById(idEncomenda)
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
@@ -118,7 +118,7 @@ public class EncomendaService {
     }
 
     @Transactional
-    public void apagar(BigDecimal id) {
+    public void apagar(Long id) {
         Encomenda encomenda = encomendaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
@@ -127,7 +127,7 @@ public class EncomendaService {
     }
 
     @Transactional
-    public Encomenda mudarEstado(BigDecimal idEncomenda, Long idNovoEstado) {
+    public Encomenda mudarEstado(Long idEncomenda, Long idNovoEstado) {
         Encomenda encomenda = encomendaRepository.findById(idEncomenda)
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
@@ -136,13 +136,9 @@ public class EncomendaService {
     }
 
     @Transactional
-    public Encomenda aceitarEncomenda(BigDecimal idEncomenda, Long idFuncionario) {
+    public Encomenda aceitarEncomenda(Long idEncomenda, Long idFuncionario) {
         Encomenda encomenda = encomendaRepository.findById(idEncomenda)
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
-
-        if (!funcionarioRepository.existsById(idFuncionario)) {
-            throw new IllegalArgumentException("Funcionário não encontrado.");
-        }
 
         if (encomenda.getIdfuncionario() != null) {
             throw new IllegalArgumentException("Esta encomenda já foi atribuída a um funcionário.");

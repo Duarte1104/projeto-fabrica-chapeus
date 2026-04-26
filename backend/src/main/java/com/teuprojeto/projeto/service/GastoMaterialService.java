@@ -32,7 +32,7 @@ public class GastoMaterialService {
 
     @Transactional
     public GastoMaterial criar(CriarGastoMaterialRequest request) {
-        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda())
+        Encomenda encomenda = encomendaRepository.findById(request.getIdEncomenda().longValue())
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
         Material material = materialRepository.findById(request.getIdMaterial())

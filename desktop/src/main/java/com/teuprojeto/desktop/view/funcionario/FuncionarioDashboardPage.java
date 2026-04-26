@@ -1,18 +1,23 @@
 package com.teuprojeto.desktop.view.funcionario;
 
+import com.teuprojeto.desktop.service.EncomendaApiService;
+import com.teuprojeto.desktop.service.FuncionarioDataService;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+
+import java.util.List;
 
 public class FuncionarioDashboardPage {
 
     private final FuncionarioShellView shell;
+    private final FuncionarioDataService funcionarioDataService = new FuncionarioDataService();
+    private final EncomendaApiService encomendaApiService = new EncomendaApiService();
 
     public FuncionarioDashboardPage(FuncionarioShellView shell) {
         this.shell = shell;
@@ -21,27 +26,93 @@ public class FuncionarioDashboardPage {
     public Parent getView() {
         VBox root = FuncionarioUiFactory.createPageContainer("Dashboard");
 
+        Label estado = new Label("A carregar dashboard...");
+        estado.setStyle("-fx-text-fill: #666666;");
+
         HBox stats = new HBox(18);
 
-        VBox card1 = statCard("Total Atribuído", String.valueOf(MockFuncionarioData.totalAtribuido()), "Ordens de produção");
-        VBox card2 = progressCard("Progresso Total", MockFuncionarioData.progressoMedioPercent());
-        VBox card3 = statCard(
-                "Unidades Produzidas",
-                MockFuncionarioData.totalUnidadesConcluidas() + "/" + MockFuncionarioData.totalUnidades(),
-                "Chapéus concluídos"
-        );
+        VBox minhasCard = statCard("Minhas Encomendas", "-", "Atribuídas a mim");
+        VBox disponiveisCard = statCard("Disponíveis", "-", "Prontas para aceitar");
+        VBox concluidasCard = statCard("Concluídas", "-", "Terminadas por mim");
+        stats.getChildren().addAll(minhasCard, disponiveisCard, concluidasCard);
 
-        stats.getChildren().addAll(card1, card2, card3);
+        VBox minhasLista = FuncionarioUiFactory.createCard();
+        minhasLista.getChildren().add(sectionTitle("Minhas Encomendas"));
 
-        VBox lista = FuncionarioUiFactory.createCard();
-        lista.getChildren().add(sectionTitle("Ordens de Produção Atribuídas"));
+        VBox disponiveisLista = FuncionarioUiFactory.createCard();
+        disponiveisLista.getChildren().add(sectionTitle("Encomendas Disponíveis"));
 
-        for (FuncionarioEncomendaRow encomenda : MockFuncionarioData.getEncomendas()) {
-            lista.getChildren().add(buildOrdemCard(encomenda));
-        }
+        root.getChildren().addAll(estado, stats, minhasLista, disponiveisLista);
 
-        root.getChildren().addAll(stats, lista);
+        carregarDados(estado, minhasCard, disponiveisCard, concluidasCard, minhasLista, disponiveisLista);
+
         return FuncionarioUiFactory.wrapInScroll(root);
+    }
+
+    private void carregarDados(Label estado,
+                               VBox minhasCard,
+                               VBox disponiveisCard,
+                               VBox concluidasCard,
+                               VBox minhasLista,
+                               VBox disponiveisLista) {
+
+        estado.setText("A carregar dashboard...");
+
+        Task<FuncionarioDataService.FuncionarioDashboardData> task = new Task<>() {
+            @Override
+            protected FuncionarioDataService.FuncionarioDashboardData call() {
+                return funcionarioDataService.carregarDashboard(shell.getFuncionarioId());
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            var data = task.getValue();
+            List<FuncionarioEncomendaRow> minhas = data.minhasEncomendas();
+            List<FuncionarioEncomendaRow> disponiveis = data.encomendasDisponiveis();
+
+            atualizarStatCard(minhasCard, "Minhas Encomendas", String.valueOf(minhas.size()), "Atribuídas a mim");
+            atualizarStatCard(disponiveisCard, "Disponíveis", String.valueOf(disponiveis.size()), "Prontas para aceitar");
+            atualizarStatCard(concluidasCard, "Concluídas",
+                    String.valueOf(minhas.stream().filter(FuncionarioEncomendaRow::isConcluida).count()),
+                    "Terminadas por mim");
+
+            minhasLista.getChildren().clear();
+            minhasLista.getChildren().add(sectionTitle("Minhas Encomendas"));
+
+            if (minhas.isEmpty()) {
+                minhasLista.getChildren().add(new Label("Ainda não tens encomendas atribuídas."));
+            } else {
+                for (FuncionarioEncomendaRow row : minhas) {
+                    minhasLista.getChildren().add(buildMinhaEncomendaCard(row));
+                }
+            }
+
+            disponiveisLista.getChildren().clear();
+            disponiveisLista.getChildren().add(sectionTitle("Encomendas Disponíveis"));
+
+            if (disponiveis.isEmpty()) {
+                disponiveisLista.getChildren().add(new Label("Não existem encomendas disponíveis neste momento."));
+            } else {
+                for (FuncionarioEncomendaRow row : disponiveis) {
+                    disponiveisLista.getChildren().add(buildDisponivelCard(row, estado, minhasCard, disponiveisCard, concluidasCard, minhasLista, disponiveisLista));
+                }
+            }
+
+            estado.setText("Dashboard carregado.");
+        });
+
+        task.setOnFailed(event -> {
+            estado.setText("Erro ao carregar dashboard.");
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Erro");
+            alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            alert.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private VBox statCard(String titulo, String valor, String subtitulo) {
@@ -61,25 +132,60 @@ public class FuncionarioDashboardPage {
         return card;
     }
 
-    private VBox progressCard(String titulo, int percentagem) {
-        VBox card = FuncionarioUiFactory.createCard();
-        card.setPrefWidth(320);
+    private void atualizarStatCard(VBox card, String titulo, String valor, String subtitulo) {
+        card.getChildren().clear();
 
         Label l1 = new Label(titulo);
         l1.setStyle("-fx-text-fill: #666; -fx-font-size: 14;");
 
-        Label l2 = new Label(percentagem + "%");
-        l2.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #2563eb;");
+        Label l2 = new Label(valor);
+        l2.setStyle("-fx-font-size: 30; -fx-font-weight: bold;");
 
-        ProgressBar bar = new ProgressBar(percentagem / 100.0);
-        bar.setPrefWidth(1000);
-        bar.setStyle("-fx-accent: #111827;");
+        Label l3 = new Label(subtitulo);
+        l3.setStyle("-fx-text-fill: #666; -fx-font-size: 12;");
 
-        card.getChildren().addAll(l1, l2, bar);
+        card.getChildren().addAll(l1, l2, l3);
+    }
+
+    private VBox buildMinhaEncomendaCard(FuncionarioEncomendaRow encomenda) {
+        VBox card = baseCard(encomenda);
+
+        Button atualizar = FuncionarioUiFactory.primaryButton("Atualizar Progresso");
+        atualizar.setOnAction(e -> {
+            shell.setEncomendaSelecionada(encomenda);
+            shell.navigateTo(FuncionarioPage.ATUALIZAR_PRODUCAO);
+        });
+
+        Button materiais = FuncionarioUiFactory.secondaryButton("Gastos Material");
+        materiais.setOnAction(e -> {
+            shell.setEncomendaSelecionada(encomenda);
+            shell.navigateTo(FuncionarioPage.GASTOS_MATERIAL);
+        });
+
+        HBox botoes = new HBox(10, atualizar, materiais);
+        card.getChildren().add(botoes);
+
         return card;
     }
 
-    private VBox buildOrdemCard(FuncionarioEncomendaRow encomenda) {
+    private VBox buildDisponivelCard(FuncionarioEncomendaRow encomenda,
+                                     Label estado,
+                                     VBox minhasCard,
+                                     VBox disponiveisCard,
+                                     VBox concluidasCard,
+                                     VBox minhasLista,
+                                     VBox disponiveisLista) {
+
+        VBox card = baseCard(encomenda);
+
+        Button aceitar = FuncionarioUiFactory.primaryButton("Aceitar Encomenda");
+        aceitar.setOnAction(e -> aceitarEncomenda(encomenda, estado, minhasCard, disponiveisCard, concluidasCard, minhasLista, disponiveisLista));
+
+        card.getChildren().add(aceitar);
+        return card;
+    }
+
+    private VBox baseCard(FuncionarioEncomendaRow encomenda) {
         VBox card = new VBox(12);
         card.setPadding(new javafx.geometry.Insets(14));
         card.setStyle("-fx-background-color: white; -fx-border-color: #dddddd; -fx-border-radius: 10; -fx-background-radius: 10;");
@@ -91,25 +197,20 @@ public class FuncionarioDashboardPage {
         produto.setStyle("-fx-font-size: 22; -fx-font-weight: bold;");
 
         Label prioridade = badge(encomenda.getPrioridade(), "#fff7ed", "#ea580c");
-        Label estado = badge(encomenda.isConcluida() ? "Concluído" : "Em produção",
+        Label estadoBadge = badge(encomenda.getEstado(),
                 encomenda.isConcluida() ? "#dcfce7" : "#eff6ff",
                 encomenda.isConcluida() ? "#15803d" : "#1d4ed8");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button detalhes = FuncionarioUiFactory.secondaryButton("Atualizar Progresso");
-        detalhes.setOnAction(e -> {
-            shell.setEncomendaSelecionada(encomenda);
-            shell.navigateTo(FuncionarioPage.ATUALIZAR_PRODUCAO);
-        });
+        top.getChildren().addAll(produto, prioridade, estadoBadge, spacer);
 
-        top.getChildren().addAll(produto, prioridade, estado, spacer, detalhes);
-
-        Label ordem = new Label("Ordem: " + encomenda.getCodigoOrdem() + " | Encomenda: " + encomenda.getCodigoEncomenda());
+        Label encomendaInfo = new Label("Encomenda: " + encomenda.getCodigoEncomenda());
         Label cliente = new Label("Cliente: " + encomenda.getCliente());
+        Label quantidade = new Label("Quantidade total: " + encomenda.getQuantidadeTotal());
 
-        Label progressoTexto = new Label("Progresso:");
+        Label progressoTexto = new Label("Progresso: " + encomenda.getResumoEtapas());
         ProgressBar progressBar = new ProgressBar(encomenda.getProgresso());
         progressBar.setPrefWidth(1000);
         progressBar.setStyle("-fx-accent: #111827;");
@@ -117,18 +218,54 @@ public class FuncionarioDashboardPage {
         HBox bottom = new HBox();
         bottom.setAlignment(Pos.CENTER_LEFT);
 
-        Label unidades = new Label(encomenda.getUnidadesConcluidas() + " / " + encomenda.getQuantidadeTotal() + " unidades");
-
-        Region spacer2 = new Region();
-        HBox.setHgrow(spacer2, Priority.ALWAYS);
-
-        Label dataLimite = new Label(encomenda.getDataLimite());
+        Label dataLimite = new Label("Data limite: " + encomenda.getDataLimite());
         dataLimite.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
 
-        bottom.getChildren().addAll(unidades, spacer2, dataLimite);
+        bottom.getChildren().addAll(dataLimite);
 
-        card.getChildren().addAll(top, ordem, cliente, progressoTexto, progressBar, bottom);
+        card.getChildren().addAll(top, encomendaInfo, cliente, quantidade, progressoTexto, progressBar, bottom);
         return card;
+    }
+
+    private void aceitarEncomenda(FuncionarioEncomendaRow encomenda,
+                                  Label estado,
+                                  VBox minhasCard,
+                                  VBox disponiveisCard,
+                                  VBox concluidasCard,
+                                  VBox minhasLista,
+                                  VBox disponiveisLista) {
+
+        estado.setText("A aceitar encomenda " + encomenda.getCodigoEncomenda() + "...");
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                encomendaApiService.aceitarEncomenda(encomenda.getIdEncomenda(), shell.getFuncionarioId());
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setHeaderText("Encomenda aceite");
+            alert.setContentText("A encomenda foi atribuída ao funcionário.");
+            alert.showAndWait();
+
+            carregarDados(estado, minhasCard, disponiveisCard, concluidasCard, minhasLista, disponiveisLista);
+        });
+
+        task.setOnFailed(event -> {
+            estado.setText("Erro ao aceitar encomenda.");
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Erro");
+            alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            alert.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private Label sectionTitle(String text) {

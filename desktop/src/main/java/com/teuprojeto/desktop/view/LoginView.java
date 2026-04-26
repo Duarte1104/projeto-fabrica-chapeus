@@ -2,7 +2,7 @@ package com.teuprojeto.desktop.view;
 
 import com.teuprojeto.desktop.MainApp;
 import com.teuprojeto.desktop.model.AppUser;
-import com.teuprojeto.desktop.model.FakeAuthService;
+import com.teuprojeto.desktop.service.AuthApiService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -12,9 +12,11 @@ import javafx.scene.layout.*;
 public class LoginView {
 
     private final MainApp app;
+    private final AuthApiService authApiService;
 
     public LoginView(MainApp app) {
         this.app = app;
+        this.authApiService = new AuthApiService();
     }
 
     public Parent getView() {
@@ -81,6 +83,10 @@ public class LoginView {
         );
         form.setAlignment(Pos.CENTER_LEFT);
 
+        Label info = new Label("As contas são criadas pelo administrador.");
+        info.setStyle("-fx-text-fill: #8a8a8a; -fx-font-size: 12;");
+        info.setWrapText(true);
+
         Label message = new Label();
         message.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
         message.setWrapText(true);
@@ -98,36 +104,24 @@ public class LoginView {
                         "-fx-cursor: hand;"
         );
 
-        Label registerText = new Label("Não tem conta?");
-        registerText.setStyle("-fx-text-fill: #8a8a8a; -fx-font-size: 13;");
-
-        Hyperlink registerLink = new Hyperlink("Registar");
-        registerLink.setStyle(
-                "-fx-text-fill: #1f3ccf; " +
-                        "-fx-font-size: 13; " +
-                        "-fx-font-weight: bold;"
-        );
-        registerLink.setBorder(Border.EMPTY);
-        registerLink.setPadding(Insets.EMPTY);
-
-        HBox bottom = new HBox(4, registerText, registerLink);
-        bottom.setAlignment(Pos.CENTER);
-
         loginButton.setOnAction(e -> {
-            AppUser user = FakeAuthService.login(emailField.getText(), passwordField.getText());
-            if (user == null) {
-                message.setText("Credenciais inválidas.");
-            } else {
-                message.setText("");
-                app.showDashboard(user);
+            try {
+                AppUser user = authApiService.login(emailField.getText().trim(), passwordField.getText());
+
+                if (user == null) {
+                    message.setText("Credenciais inválidas.");
+                } else {
+                    message.setText("");
+                    app.showDashboard(user);
+                }
+            } catch (Exception ex) {
+                message.setText("Credenciais inválidas ou erro ao ligar ao backend.");
             }
         });
 
-        registerLink.setOnAction(e -> app.showRegister());
-
         VBox.setMargin(loginButton, new Insets(8, 0, 0, 0));
 
-        card.getChildren().addAll(header, form, loginButton, bottom, message);
+        card.getChildren().addAll(header, form, info, loginButton, message);
 
         StackPane center = new StackPane(card);
         center.setPadding(new Insets(40));
