@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Minhas Encomendas - Área do Cliente</title>
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="client-layout">
+
+    <aside class="client-sidebar">
+        <div class="sidebar-brand">
+            <h1>Fábrica de Chapéus</h1>
+            <p>Área do Cliente</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a th:href="@{/cliente}">Dashboard</a>
+            <a th:href="@{/catalogo}">Catálogo</a>
+            <a th:href="@{/nova-encomenda}">Nova Encomenda</a>
+            <a th:href="@{/encomendas}" class="active">Minhas Encomendas</a>
+            <a th:href="@{/faturas}">Faturas</a>
+            <a th:href="@{/perfil}">Perfil</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="sidebar-logout">Sair</a>
+    </aside>
+
+    <main class="client-main">
+        <header class="client-topbar">
+            <div>
+                <h2>Minhas Encomendas</h2>
+                <p>Consulte aqui as suas encomendas realizadas.</p>
+            </div>
+
+            <a th:href="@{/nova-encomenda}" class="btn-header">Nova Encomenda</a>
+        </header>
+
+        <div class="alert alert-success" th:if="${sucesso}" th:text="${sucesso}"></div>
+
+        <section class="dashboard-card">
+            <h3>Encomenda submetida</h3>
+            <p>
+                As encomendas criadas pela Web ficam registadas no sistema interno da fábrica.
+                A listagem detalhada com dados reais será ligada no próximo passo.
+            </p>
+            <br>
+            <a th:href="@{/catalogo}" class="card-link">Ver catálogo</a>
+        </section>
+    </main>
+
+</div>
+
+</body>
+</html>

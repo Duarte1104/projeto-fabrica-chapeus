@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Fábrica de Chapéus</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<main class="auth-page">
+
+    <section class="auth-left">
+        <div class="auth-brand">
+            <h1>Fábrica de Chapéus</h1>
+            <p>Sistema Web do Cliente</p>
+        </div>
+
+        <div class="auth-info">
+            <span class="auth-badge">Área do Cliente</span>
+            <h2>Acompanhe as suas encomendas de forma simples.</h2>
+            <p>
+                Entre na sua conta para consultar o catálogo, criar encomendas,
+                acompanhar o estado dos pedidos e visualizar as suas faturas.
+            </p>
+        </div>
+    </section>
+
+    <section class="auth-right">
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <h2>Entrar</h2>
+                <p>Introduza os seus dados de acesso.</p>
+            </div>
+
+            <div class="alert alert-success" th:if="${sucesso}" th:text="${sucesso}"></div>
+            <div class="alert alert-error" th:if="${erro}" th:text="${erro}"></div>
+
+            <form th:action="@{/login}" method="post" class="auth-form" th:object="${loginForm}">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                            type="email"
+                            id="email"
+                            th:field="*{email}"
+                            placeholder="exemplo@email.com"
+                            required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                            type="password"
+                            id="password"
+                            th:field="*{password}"
+                            placeholder="A sua password"
+                            required>
+                </div>
+
+                <button type="submit" class="btn-primary">Entrar</button>
+            </form>
+
+            <p class="auth-footer">
+                Ainda não tem conta?
+                <a th:href="@{/registo}">Criar conta</a>
+            </p>
+        </div>
+    </section>
+
+</main>
+
+</body>
+</html>

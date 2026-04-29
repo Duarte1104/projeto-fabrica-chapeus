@@ -1,8 +1,8 @@
-package com.teuprojeto.projeto.dto.encomenda;
+package pt.projeto.fabricachapeus.web.dto;
 
 import java.math.BigDecimal;
 
-public class LinhaEncomendaRequest {
+public class LinhaEncomendaWebRequest {
 
     private Long codChapeu;
     private Long quantidade;
@@ -10,7 +10,7 @@ public class LinhaEncomendaRequest {
     private String tamanho;
     private String cores;
 
-    public LinhaEncomendaRequest() {
+    public LinhaEncomendaWebRequest() {
     }
 
     public Long getCodChapeu() {

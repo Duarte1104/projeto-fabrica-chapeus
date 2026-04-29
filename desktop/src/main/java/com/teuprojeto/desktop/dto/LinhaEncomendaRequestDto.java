@@ -7,6 +7,8 @@ public class LinhaEncomendaRequestDto {
     private Long codChapeu;
     private Long quantidade;
     private BigDecimal precoUnitario;
+    private String tamanho;
+    private String cores;
 
     public LinhaEncomendaRequestDto() {
     }
@@ -33,5 +35,21 @@ public class LinhaEncomendaRequestDto {
 
     public void setPrecoUnitario(BigDecimal precoUnitario) {
         this.precoUnitario = precoUnitario;
+    }
+
+    public String getTamanho() {
+        return tamanho;
+    }
+
+    public void setTamanho(String tamanho) {
+        this.tamanho = tamanho;
+    }
+
+    public String getCores() {
+        return cores;
+    }
+
+    public void setCores(String cores) {
+        this.cores = cores;
     }
 }

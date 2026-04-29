@@ -81,8 +81,13 @@ public class RececionistaVerEncomendaPage {
 
         TableColumn<LinhaViewRow, String> quantidadeCol = new TableColumn<>("Quantidade");
         quantidadeCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getQuantidade()));
+        TableColumn<LinhaViewRow, String> tamanhoCol = new TableColumn<>("Tamanho");
+        tamanhoCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getTamanho()));
 
-        table.getColumns().addAll(chapeuCol, quantidadeCol);
+        TableColumn<LinhaViewRow, String> coresCol = new TableColumn<>("Cores");
+        coresCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCores()));
+
+        table.getColumns().addAll(chapeuCol, quantidadeCol, tamanhoCol, coresCol);
 
         VBox linhasCard = RececionistaUiFactory.createCard();
         linhasCard.getChildren().addAll(titulo("Linhas da Encomenda"), table);
@@ -177,7 +182,9 @@ public class RececionistaVerEncomendaPage {
             List<LinhaViewRow> rows = data.linhas().stream()
                     .map(linha -> new LinhaViewRow(
                             nomesChapeus.getOrDefault(linha.getCodchapeu(), "Chapéu #" + linha.getCodchapeu()),
-                            String.valueOf(linha.getQuantidade())
+                            String.valueOf(linha.getQuantidade()),
+                            valorOuTraco(linha.getTamanho()),
+                            valorOuTraco(linha.getCores())
                     ))
                     .toList();
 
@@ -259,10 +266,14 @@ public class RececionistaVerEncomendaPage {
     private static class LinhaViewRow {
         private final String chapeu;
         private final String quantidade;
+        private final String tamanho;
+        private final String cores;
 
-        private LinhaViewRow(String chapeu, String quantidade) {
+        private LinhaViewRow(String chapeu, String quantidade, String tamanho, String cores) {
             this.chapeu = chapeu;
             this.quantidade = quantidade;
+            this.tamanho = tamanho;
+            this.cores = cores;
         }
 
         public String getChapeu() {
@@ -271,6 +282,14 @@ public class RececionistaVerEncomendaPage {
 
         public String getQuantidade() {
             return quantidade;
+        }
+
+        public String getTamanho() {
+            return tamanho;
+        }
+
+        public String getCores() {
+            return cores;
         }
     }
 }

@@ -22,6 +22,12 @@ public class LinhaEncomenda {
     @Column(name = "\"quantidade\"")
     private Long quantidade;
 
+    @Column(name = "\"tamanho\"")
+    private String tamanho;
+
+    @Column(name = "\"cores\"")
+    private String cores;
+
     public LinhaEncomenda() {
     }
 
@@ -47,5 +53,21 @@ public class LinhaEncomenda {
 
     public void setQuantidade(Long quantidade) {
         this.quantidade = quantidade;
+    }
+
+    public String getTamanho() {
+        return tamanho;
+    }
+
+    public void setTamanho(String tamanho) {
+        this.tamanho = tamanho;
+    }
+
+    public String getCores() {
+        return cores;
+    }
+
+    public void setCores(String cores) {
+        this.cores = cores;
     }
 }

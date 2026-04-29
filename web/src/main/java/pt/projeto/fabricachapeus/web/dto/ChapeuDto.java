@@ -1,29 +1,18 @@
-package com.teuprojeto.projeto.entity;
+package pt.projeto.fabricachapeus.web.dto;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "\"Chapeu\"", schema = "public")
-public class Chapeu {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ChapeuDto {
 
-    @Id
-    @Column(name = "\"cod\"")
     private Long cod;
-
-    @Column(name = "\"nome\"")
     private String nome;
-
-    @Column(name = "\"precoactvenda\"")
     private BigDecimal precoactvenda;
-
-    @Column(name = "\"imagemurl\"")
     private String imagemUrl;
 
-    public Chapeu() {
+    public ChapeuDto() {
     }
 
     public Long getCod() {

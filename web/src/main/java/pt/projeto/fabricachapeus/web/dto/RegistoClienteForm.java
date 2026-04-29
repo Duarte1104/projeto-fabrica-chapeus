@@ -1,12 +1,12 @@
-package com.teuprojeto.projeto.dto.cliente;
+package pt.projeto.fabricachapeus.web.dto;
 
-public class AtualizarClienteRequest {
+public class RegistoClienteForm {
 
     private String nome;
     private String email;
     private String telefone;
     private String nif;
-    private String tipo;
+    private String tipo = "Particular";
     private String rua;
     private String nporta;
     private String codpostal;
@@ -14,7 +14,7 @@ public class AtualizarClienteRequest {
     private String observacoes;
     private String password;
 
-    public AtualizarClienteRequest() {
+    public RegistoClienteForm() {
     }
 
     public String getNome() {

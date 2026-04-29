@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Encomenda - Área do Cliente</title>
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="client-layout">
+
+    <aside class="client-sidebar">
+        <div class="sidebar-brand">
+            <h1>Fábrica de Chapéus</h1>
+            <p>Área do Cliente</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a th:href="@{/cliente}">Dashboard</a>
+            <a th:href="@{/catalogo}">Catálogo</a>
+            <a th:href="@{/nova-encomenda}" class="active">Nova Encomenda</a>
+            <a th:href="@{/encomendas}">Minhas Encomendas</a>
+            <a th:href="@{/faturas}">Faturas</a>
+            <a th:href="@{/perfil}">Perfil</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="sidebar-logout">Sair</a>
+    </aside>
+
+    <main class="client-main">
+        <header class="client-topbar">
+            <div>
+                <h2>Nova Encomenda</h2>
+                <p>Escolha um chapéu existente no catálogo e personalize a encomenda.</p>
+            </div>
+        </header>
+
+        <section class="content-card">
+            <div class="alert alert-error" th:if="${erro}" th:text="${erro}"></div>
+
+            <form method="post" th:action="@{/nova-encomenda}" class="order-form">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="codChapeu">Chapéu</label>
+                        <select id="codChapeu" name="codChapeu" required>
+                            <option value="">Selecionar chapéu</option>
+                            <option th:each="chapeu : ${chapeus}"
+                                    th:value="${chapeu.cod}"
+                                    th:text="${chapeu.nome + ' - ' + chapeu.precoactvenda + ' €'}">
+                                Chapéu
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantidade">Quantidade</label>
+                        <input type="number" id="quantidade" name="quantidade" min="1" placeholder="Ex: 10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dataEntrega">Data pretendida de entrega</label>
+                        <input type="date" id="dataEntrega" name="dataEntrega" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tamanho">Tamanho</label>
+                        <select id="tamanho" name="tamanho" required>
+                            <option value="">Selecionar tamanho</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cores">Cores</label>
+                        <input type="text" id="cores" name="cores" placeholder="Ex: Preto, Branco" required>
+                    </div>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" name="design">
+                        Preciso de personalização/design
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricaoDesign">Descrição do design</label>
+                    <textarea id="descricaoDesign" name="descricaoDesign" placeholder="Ex: logotipo bordado na frente, texto lateral, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="observacoes">Observações</label>
+                    <textarea id="observacoes" name="observacoes" placeholder="Ex: quero a aba preta e a parte superior branca..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">Submeter encomenda</button>
+            </form>
+        </section>
+    </main>
+
+</div>
+
+</body>
+</html>

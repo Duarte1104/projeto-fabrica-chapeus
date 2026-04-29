@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Faturas - Área do Cliente</title>
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="client-layout">
+
+    <aside class="client-sidebar">
+        <div class="sidebar-brand">
+            <h1>Fábrica de Chapéus</h1>
+            <p>Área do Cliente</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a th:href="@{/cliente}">Dashboard</a>
+            <a th:href="@{/catalogo}">Catálogo</a>
+            <a th:href="@{/encomendas}">Minhas Encomendas</a>
+            <a th:href="@{/faturas}" class="active">Faturas</a>
+            <a th:href="@{/perfil}">Perfil</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="sidebar-logout">Sair</a>
+    </aside>
+
+    <main class="client-main">
+        <header class="client-topbar">
+            <div>
+                <h2>Faturas</h2>
+                <p>Consulte as faturas associadas às suas encomendas.</p>
+            </div>
+        </header>
+
+        <section class="dashboard-card">
+            <h3>Ainda não existem faturas disponíveis.</h3>
+            <p>As faturas ficarão disponíveis após validação da encomenda pela fábrica.</p>
+        </section>
+    </main>
+
+</div>
+
+</body>
+</html>

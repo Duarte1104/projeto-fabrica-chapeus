@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Área do Cliente - Fábrica de Chapéus</title>
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="client-layout">
+
+    <aside class="client-sidebar">
+        <div class="sidebar-brand">
+            <h1>Fábrica de Chapéus</h1>
+            <p>Área do Cliente</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a th:href="@{/cliente}" class="active">Dashboard</a>
+            <a th:href="@{/catalogo}">Catálogo</a>
+            <a th:href="@{/encomendas}">Minhas Encomendas</a>
+            <a th:href="@{/faturas}">Faturas</a>
+            <a th:href="@{/perfil}">Perfil</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="sidebar-logout">Sair</a>
+    </aside>
+
+    <main class="client-main">
+        <header class="client-topbar">
+            <div>
+                <h2>Bem-vindo à Área do Cliente</h2>
+                <p th:text="'Sessão iniciada como ' + ${clienteEmail}">
+                    Acompanhe as suas encomendas, faturas e pedidos personalizados.
+                </p>
+            </div>
+        </header>
+
+        <section class="dashboard-grid">
+            <article class="dashboard-card">
+                <h3>Catálogo</h3>
+                <p>Consulte os chapéus disponíveis para encomenda.</p>
+                <a th:href="@{/catalogo}" class="card-link">Abrir catálogo</a>
+            </article>
+
+            <article class="dashboard-card">
+                <h3>Encomendas</h3>
+                <p>Acompanhe o estado das suas encomendas submetidas.</p>
+                <a th:href="@{/encomendas}" class="card-link">Ver encomendas</a>
+            </article>
+
+            <article class="dashboard-card">
+                <h3>Faturas</h3>
+                <p>Consulte documentos associados às suas encomendas.</p>
+                <a th:href="@{/faturas}" class="card-link">Ver faturas</a>
+            </article>
+        </section>
+    </main>
+
+</div>
+
+</body>
+</html>

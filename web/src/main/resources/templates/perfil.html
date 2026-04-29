@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil - Área do Cliente</title>
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="client-layout">
+
+    <aside class="client-sidebar">
+        <div class="sidebar-brand">
+            <h1>Fábrica de Chapéus</h1>
+            <p>Área do Cliente</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a th:href="@{/cliente}">Dashboard</a>
+            <a th:href="@{/catalogo}">Catálogo</a>
+            <a th:href="@{/nova-encomenda}">Nova Encomenda</a>
+            <a th:href="@{/encomendas}">Minhas Encomendas</a>
+            <a th:href="@{/faturas}">Faturas</a>
+            <a th:href="@{/perfil}" class="active">Perfil</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="sidebar-logout">Sair</a>
+    </aside>
+
+    <main class="client-main">
+        <header class="client-topbar">
+            <div>
+                <h2>Perfil do Cliente</h2>
+                <p>Consulte os seus dados e altere a password de acesso.</p>
+            </div>
+        </header>
+
+        <section class="profile-grid">
+
+            <article class="content-card">
+                <h3>Dados da conta</h3>
+
+                <div class="profile-info">
+                    <div>
+                        <span>Nome</span>
+                        <strong th:text="${clienteNome}">Cliente</strong>
+                    </div>
+
+                    <div>
+                        <span>Email</span>
+                        <strong th:text="${clienteEmail}">cliente@email.com</strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="content-card">
+                <h3>Alterar password</h3>
+
+                <div class="alert alert-success" th:if="${sucesso}" th:text="${sucesso}"></div>
+                <div class="alert alert-error" th:if="${erro}" th:text="${erro}"></div>
+
+                <form class="order-form" method="post" th:action="@{/perfil/alterar-password}">
+                    <div class="form-group">
+                        <label for="passwordAtual">Password atual</label>
+                        <input type="password" id="passwordAtual" name="passwordAtual" placeholder="Password atual" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="novaPassword">Nova password</label>
+                        <input type="password" id="novaPassword" name="novaPassword" placeholder="Nova password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmarPassword">Confirmar nova password</label>
+                        <input type="password" id="confirmarPassword" name="confirmarPassword" placeholder="Confirmar nova password" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Alterar password</button>
+                </form>
+            </article>
+
+        </section>
+    </main>
+
+</div>
+
+</body>
+</html>

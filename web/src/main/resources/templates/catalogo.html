@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Catálogo - Área do Cliente</title>
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="client-layout">
+
+    <aside class="client-sidebar">
+        <div class="sidebar-brand">
+            <h1>Fábrica de Chapéus</h1>
+            <p>Área do Cliente</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a th:href="@{/cliente}">Dashboard</a>
+            <a th:href="@{/catalogo}" class="active">Catálogo</a>
+            <a th:href="@{/nova-encomenda}">Nova Encomenda</a>
+            <a th:href="@{/encomendas}">Minhas Encomendas</a>
+            <a th:href="@{/faturas}">Faturas</a>
+            <a th:href="@{/perfil}">Perfil</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="sidebar-logout">Sair</a>
+    </aside>
+
+    <main class="client-main">
+        <header class="client-topbar">
+            <div>
+                <h2>Catálogo de Chapéus</h2>
+                <p>Chapéus carregados diretamente da base de dados.</p>
+            </div>
+
+            <a th:href="@{/nova-encomenda}" class="btn-header">Nova Encomenda</a>
+        </header>
+
+        <section class="catalog-grid">
+            <article class="dashboard-card" th:each="chapeu : ${chapeus}">
+                <img class="product-img"
+                     th:if="${chapeu.imagemUrl != null and !#strings.isEmpty(chapeu.imagemUrl)}"
+                     th:src="${chapeu.imagemUrl}"
+                     alt="Imagem do chapéu">
+
+                <div class="product-image"
+                     th:if="${chapeu.imagemUrl == null or #strings.isEmpty(chapeu.imagemUrl)}">🎩</div>
+
+                <h3 th:text="${chapeu.nome}">Nome do chapéu</h3>
+
+                <p>Código: <span th:text="${chapeu.cod}">1</span></p>
+
+                <strong>
+                    <span th:text="${chapeu.precoactvenda}">0.00</span> €
+                </strong>
+
+                <a th:href="@{/nova-encomenda}" class="card-button">Encomendar</a>
+            </article>
+        </section>
+    </main>
+
+</div>
+
+</body>
+</html>

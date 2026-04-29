@@ -1,5 +1,9 @@
 package com.teuprojeto.projeto.controller;
 
+import com.teuprojeto.projeto.dto.cliente.AlterarPasswordClienteRequest;
+import com.teuprojeto.projeto.dto.cliente.AtualizarClienteRequest;
+import com.teuprojeto.projeto.dto.cliente.ClienteLoginRequest;
+import com.teuprojeto.projeto.dto.cliente.ClienteLoginResponse;
 import com.teuprojeto.projeto.dto.cliente.CriarClienteRequest;
 import com.teuprojeto.projeto.entity.Cliente;
 import com.teuprojeto.projeto.service.ClienteService;
@@ -7,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import com.teuprojeto.projeto.dto.cliente.AtualizarClienteRequest;
 
 @RestController
 @RequestMapping("/clientes")
@@ -23,6 +26,23 @@ public class ClienteController {
     @ResponseStatus(HttpStatus.CREATED)
     public Cliente criar(@RequestBody CriarClienteRequest request) {
         return clienteService.criar(request);
+    }
+
+    @PostMapping("/registo-web")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Cliente criarPelaWeb(@RequestBody CriarClienteRequest request) {
+        return clienteService.criar(request);
+    }
+
+    @PostMapping("/login")
+    public ClienteLoginResponse login(@RequestBody ClienteLoginRequest request) {
+        return clienteService.login(request);
+    }
+
+    @PostMapping("/alterar-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void alterarPassword(@RequestBody AlterarPasswordClienteRequest request) {
+        clienteService.alterarPassword(request);
     }
 
     @GetMapping

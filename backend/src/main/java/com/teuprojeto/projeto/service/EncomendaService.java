@@ -50,6 +50,26 @@ public class EncomendaService {
         BigDecimal valorTotal = BigDecimal.ZERO;
 
         for (LinhaEncomendaRequest linha : request.getLinhas()) {
+            if (linha.getCodChapeu() == null) {
+                throw new IllegalArgumentException("O chapéu é obrigatório em todas as linhas.");
+            }
+
+            if (linha.getQuantidade() == null || linha.getQuantidade() <= 0) {
+                throw new IllegalArgumentException("A quantidade deve ser superior a zero.");
+            }
+
+            if (linha.getPrecoUnitario() == null) {
+                throw new IllegalArgumentException("O preço unitário é obrigatório.");
+            }
+
+            if (linha.getTamanho() == null || linha.getTamanho().isBlank()) {
+                throw new IllegalArgumentException("O tamanho é obrigatório em todas as linhas.");
+            }
+
+            if (linha.getCores() == null || linha.getCores().isBlank()) {
+                throw new IllegalArgumentException("Indique pelo menos uma cor em todas as linhas.");
+            }
+
             BigDecimal subtotal = linha.getPrecoUnitario()
                     .multiply(BigDecimal.valueOf(linha.getQuantidade()));
             valorTotal = valorTotal.add(subtotal);
@@ -79,6 +99,8 @@ public class EncomendaService {
             linha.setNumencomenda(encomendaGuardada.getNum());
             linha.setCodchapeu(linhaRequest.getCodChapeu());
             linha.setQuantidade(linhaRequest.getQuantidade());
+            linha.setTamanho(linhaRequest.getTamanho().trim());
+            linha.setCores(linhaRequest.getCores().trim());
             linhaEncomendaRepository.save(linha);
         }
 

@@ -1,0 +1,509 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    background: #f5f6fa;
+    color: #111827;
+}
+
+/* =========================
+   PÁGINAS DE AUTENTICAÇÃO
+   ========================= */
+
+.auth-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 42% 58%;
+    background: #f5f6fa;
+}
+
+.auth-left {
+    background: #0f172a;
+    color: white;
+    padding: 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.auth-brand h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.auth-brand p {
+    color: #94a3b8;
+    font-size: 16px;
+}
+
+.auth-info {
+    max-width: 520px;
+}
+
+.auth-badge {
+    display: inline-block;
+    background: rgba(37, 99, 235, 0.2);
+    color: #bfdbfe;
+    border: 1px solid rgba(147, 197, 253, 0.25);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 22px;
+}
+
+.auth-info h2 {
+    font-size: 42px;
+    line-height: 1.12;
+    margin-bottom: 20px;
+    letter-spacing: -0.03em;
+}
+
+.auth-info p {
+    color: #cbd5e1;
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+.auth-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 22px;
+    padding: 38px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.auth-card-header {
+    margin-bottom: 28px;
+}
+
+.auth-card-header h2 {
+    font-size: 32px;
+    color: #111827;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+
+.auth-card-header p {
+    color: #6b7280;
+    font-size: 15px;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.form-group input {
+    height: 48px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 0 14px;
+    font-size: 15px;
+    color: #111827;
+    transition: 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.btn-primary {
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 12px;
+    background: #020617;
+    color: white;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+}
+
+.auth-footer {
+    margin-top: 24px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 15px;
+}
+
+.auth-footer a {
+    color: #2563eb;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* =========================
+   ÁREA DO CLIENTE PROVISÓRIA
+   ========================= */
+
+.client-layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    background: #f5f6fa;
+}
+
+.client-sidebar {
+    background: #0f172a;
+    color: white;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-brand {
+    padding-bottom: 28px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    margin-bottom: 28px;
+}
+
+.sidebar-brand h1 {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.sidebar-brand p {
+    color: #94a3b8;
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-menu a {
+    color: #e5e7eb;
+    text-decoration: none;
+    padding: 13px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: 0.2s ease;
+}
+
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
+    background: rgba(37, 99, 235, 0.18);
+    color: white;
+}
+
+.sidebar-logout {
+    margin-top: auto;
+    color: #fecaca;
+    text-decoration: none;
+    font-weight: 800;
+    padding: 13px 14px;
+    border-radius: 12px;
+}
+
+.sidebar-logout:hover {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.client-main {
+    padding: 42px;
+}
+
+.client-topbar {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 22px;
+    padding: 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+.client-topbar h2 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.client-topbar p {
+    color: #6b7280;
+    font-size: 16px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.dashboard-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 22px;
+    padding: 28px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+.dashboard-card h3 {
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.dashboard-card p {
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+/* =========================
+   RESPONSIVO
+   ========================= */
+
+.auth-card-wide {
+    max-width: 680px;
+}
+
+.alert {
+    padding: 13px 15px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.alert-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+}
+
+.content-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 22px;
+    padding: 28px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+.content-card h3 {
+    font-size: 24px;
+    margin-bottom: 18px;
+}
+
+.order-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 22px;
+}
+
+.profile-info div {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.profile-info span {
+    display: block;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.profile-info strong {
+    color: #111827;
+    font-size: 16px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.product-img {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    background: #f3f4f6;
+}
+
+.form-group select,
+.form-group textarea {
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 0 14px;
+    font-size: 15px;
+    color: #111827;
+    transition: 0.2s ease;
+}
+
+.form-group select {
+    height: 48px;
+}
+
+.form-group textarea {
+    min-height: 110px;
+    padding: 14px;
+    resize: vertical;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.checkbox-group label {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.checkbox-group input {
+    width: 18px;
+    height: 18px;
+}
+
+.client-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.btn-header,
+.card-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border-radius: 12px;
+    background: #020617;
+    color: white;
+    font-weight: 800;
+    transition: 0.2s ease;
+}
+
+.btn-header {
+    min-width: 170px;
+    height: 46px;
+}
+
+.card-button {
+    margin-top: 18px;
+    height: 42px;
+    padding: 0 18px;
+}
+
+.btn-header:hover,
+.card-button:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+}
+
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.product-image {
+    font-size: 56px;
+    margin-bottom: 16px;
+}
+
+.dashboard-card strong {
+    display: block;
+    margin-top: 12px;
+    color: #111827;
+}
+
+.card-link {
+    color: #2563eb;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.card-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+    .form-grid,
+    .catalog-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .client-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .btn-header {
+        width: 100%;
+    }
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}

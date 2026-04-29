@@ -256,14 +256,16 @@ public class RececionistaCriarEncomendaPage {
             ChapeuDto chapeu = linhaItem.chapeuBox.getValue();
             String quantidadeTexto = linhaItem.quantidadeField.getText();
             String precoTexto = linhaItem.precoField.getText();
+            String tamanho = linhaItem.tamanhoBox.getValue();
+            String cores = linhaItem.coresField.getText();
 
             if (chapeu == null) {
                 mostrarErro("Seleciona um chapéu em todas as linhas.");
                 return;
             }
 
-            if (isBlank(quantidadeTexto) || isBlank(precoTexto)) {
-                mostrarErro("Preenche quantidade e preço unitário em todas as linhas.");
+            if (isBlank(quantidadeTexto) || isBlank(precoTexto) || isBlank(tamanho) || isBlank(cores)) {
+                mostrarErro("Preenche quantidade, preço unitário, tamanho e cores em todas as linhas.");
                 return;
             }
 
@@ -285,6 +287,8 @@ public class RececionistaCriarEncomendaPage {
                 linha.setCodChapeu(chapeu.getCod());
                 linha.setQuantidade(quantidade);
                 linha.setPrecoUnitario(precoUnitario);
+                linha.setTamanho(tamanho.trim());
+                linha.setCores(cores.trim());
 
                 linhas.add(linha);
 
@@ -362,6 +366,8 @@ public class RececionistaCriarEncomendaPage {
         private final ComboBox<ChapeuDto> chapeuBox = new ComboBox<>();
         private final TextField quantidadeField = new TextField();
         private final TextField precoField = new TextField();
+        private final ComboBox<String> tamanhoBox = new ComboBox<>();
+        private final TextField coresField = new TextField();
 
         private LinhaItem() {
             root.setUserData(this);
@@ -386,6 +392,10 @@ public class RececionistaCriarEncomendaPage {
 
             quantidadeField.setPromptText("Quantidade");
             precoField.setPromptText("Preço unitário");
+            tamanhoBox.setPromptText("Tamanho");
+            tamanhoBox.getItems().setAll("S", "M", "L", "XL");
+
+            coresField.setPromptText("Ex: Preto, Branco");
 
             chapeuBox.valueProperty().addListener((obs, oldValue, selected) -> {
                 if (selected != null && selected.getPrecoactvenda() != null) {
@@ -398,15 +408,19 @@ public class RececionistaCriarEncomendaPage {
             VBox chapeuCol = criarCampoBox("Chapéu", chapeuBox);
             VBox quantidadeCol = criarCampoBox("Quantidade", quantidadeField);
             VBox precoCol = criarCampoBox("Preço unitário", precoField);
+            VBox tamanhoCol = criarCampoBox("Tamanho", tamanhoBox);
+            VBox coresCol = criarCampoBox("Cores", coresField);
 
             HBox.setHgrow(chapeuCol, Priority.ALWAYS);
             HBox.setHgrow(quantidadeCol, Priority.ALWAYS);
             HBox.setHgrow(precoCol, Priority.ALWAYS);
+            HBox.setHgrow(tamanhoCol, Priority.ALWAYS);
+            HBox.setHgrow(coresCol, Priority.ALWAYS);
 
             Region spacer = new Region();
             spacer.setMinWidth(0);
 
-            root.getChildren().addAll(chapeuCol, quantidadeCol, precoCol, spacer);
+            root.getChildren().addAll(chapeuCol, quantidadeCol, precoCol, tamanhoCol, coresCol, spacer);
             HBox.setHgrow(spacer, Priority.NEVER);
         }
 

@@ -8,6 +8,8 @@ public class LinhaEncomendaDto {
     private Long numencomenda;
     private Long codchapeu;
     private Long quantidade;
+    private String tamanho;
+    private String cores;
 
     public LinhaEncomendaDto() {
     }
@@ -34,5 +36,21 @@ public class LinhaEncomendaDto {
 
     public void setQuantidade(Long quantidade) {
         this.quantidade = quantidade;
+    }
+
+    public String getTamanho() {
+        return tamanho;
+    }
+
+    public void setTamanho(String tamanho) {
+        this.tamanho = tamanho;
+    }
+
+    public String getCores() {
+        return cores;
+    }
+
+    public void setCores(String cores) {
+        this.cores = cores;
     }
 }

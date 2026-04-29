@@ -12,6 +12,7 @@ public class CriarClienteRequest {
     private String codpostal;
     private String cidade;
     private String observacoes;
+    private String password;
 
     public CriarClienteRequest() {
     }
@@ -20,79 +21,87 @@ public class CriarClienteRequest {
         return nome;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
     public String getEmail() {
         return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getTelefone() {
         return telefone;
     }
 
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
     public String getNif() {
         return nif;
-    }
-
-    public void setNif(String nif) {
-        this.nif = nif;
     }
 
     public String getTipo() {
         return tipo;
     }
 
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
     public String getRua() {
         return rua;
-    }
-
-    public void setRua(String rua) {
-        this.rua = rua;
     }
 
     public String getNporta() {
         return nporta;
     }
 
-    public void setNporta(String nporta) {
-        this.nporta = nporta;
-    }
-
     public String getCodpostal() {
         return codpostal;
-    }
-
-    public void setCodpostal(String codpostal) {
-        this.codpostal = codpostal;
     }
 
     public String getCidade() {
         return cidade;
     }
 
-    public void setCidade(String cidade) {
-        this.cidade = cidade;
-    }
-
     public String getObservacoes() {
         return observacoes;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
+    }
+
+    public void setNif(String nif) {
+        this.nif = nif;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public void setRua(String rua) {
+        this.rua = rua;
+    }
+
+    public void setNporta(String nporta) {
+        this.nporta = nporta;
+    }
+
+    public void setCodpostal(String codpostal) {
+        this.codpostal = codpostal;
+    }
+
+    public void setCidade(String cidade) {
+        this.cidade = cidade;
+    }
+
     public void setObservacoes(String observacoes) {
         this.observacoes = observacoes;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Fábrica de Chapéus</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="topbar">
+    <div class="logo">Fábrica de Chapéus</div>
+    <nav>
+        <a th:href="@{/}">Início</a>
+        <a th:href="@{/catalogo}">Catálogo</a>
+        <a th:href="@{/login}">Login</a>
+        <a th:href="@{/registo}" class="btn-nav">Criar conta</a>
+    </nav>
+</header>
+
+<main class="hero">
+    <section class="hero-content">
+        <h1>Chapéus personalizados para cada cliente</h1>
+        <p>
+            Consulte o catálogo, crie a sua conta e acompanhe as suas encomendas diretamente pela aplicação web.
+        </p>
+        <div class="hero-actions">
+            <a th:href="@{/catalogo}" class="btn-primary">Ver catálogo</a>
+            <a th:href="@{/registo}" class="btn-secondary">Criar conta</a>
+        </div>
+    </section>
+</main>
+
+</body>
+</html>

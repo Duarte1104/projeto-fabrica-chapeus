@@ -1,45 +1,50 @@
 package com.teuprojeto.projeto.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-@Table(name = "\"Cliente\"", schema = "public")
+@Table(name = "cliente", schema = "public")
 public class Cliente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "\"cod\"")
+    @Column(name = "cod")
     private Integer cod;
 
-    @Column(name = "\"nome\"", nullable = false)
+    @Column(name = "nome", nullable = false)
     private String nome;
 
-    @Column(name = "\"email\"", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "\"telefone\"", nullable = false)
+    @Column(name = "telefone", nullable = false)
     private String telefone;
 
-    @Column(name = "\"nif\"", nullable = false, unique = true)
+    @Column(name = "nif", nullable = false, unique = true)
     private String nif;
 
-    @Column(name = "\"tipo\"", nullable = false)
+    @Column(name = "tipo", nullable = false)
     private String tipo;
 
-    @Column(name = "\"rua\"", nullable = false)
+    @Column(name = "rua", nullable = false)
     private String rua;
 
-    @Column(name = "\"nporta\"")
+    @Column(name = "nporta")
     private String nporta;
 
-    @Column(name = "\"codpostal\"", nullable = false)
+    @Column(name = "codpostal", nullable = false)
     private String codpostal;
 
-    @Column(name = "\"cidade\"", nullable = false)
+    @Column(name = "cidade", nullable = false)
     private String cidade;
 
-    @Column(name = "\"observacoes\"", length = 1000)
+    @Column(name = "observacoes", length = 1000)
     private String observacoes;
+
+    @JsonIgnore
+    @Column(name = "password", nullable = false, length = 200)
+    private String password = "1234";
 
     public Cliente() {
     }
@@ -130,5 +135,13 @@ public class Cliente {
 
     public void setObservacoes(String observacoes) {
         this.observacoes = observacoes;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
