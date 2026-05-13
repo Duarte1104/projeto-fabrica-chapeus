@@ -5,38 +5,31 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "\"DesignEncomenda\"", schema = "public")
+@Table(name = "design_encomenda", schema = "public")
 public class DesignEncomenda {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "\"id\"")
+    @Column(name = "id")
     private Long id;
 
-    @Column(name = "\"idencomenda\"", nullable = false)
+    @Column(name = "idencomenda", nullable = false)
     private java.math.BigDecimal idEncomenda;
 
-    @Column(name = "\"descricaodesigner\"", length = 1000)
+    @Column(name = "descricaodesigner", length = 1000)
     private String descricaoDesigner;
 
-    @Column(name = "\"ficheirodesign\"", length = 500)
+    @Column(name = "ficheirodesign", length = 500)
     private String ficheiroDesign;
 
-    @Column(name = "\"estadodesign\"", nullable = false, length = 50)
+    @Column(name = "estadodesign", nullable = false, length = 50)
     private String estadoDesign;
 
-    @Column(name = "\"datacriacao\"", nullable = false)
+    @Column(name = "datacriacao", nullable = false)
     private LocalDateTime dataCriacao;
-
-    public DesignEncomenda() {
-    }
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public java.math.BigDecimal getIdEncomenda() {

@@ -38,10 +38,6 @@ public class GastoMaterialService {
         Material material = materialRepository.findById(request.getIdMaterial())
                 .orElseThrow(() -> new IllegalArgumentException("Material não encontrado."));
 
-        if (material.getStockAtual().compareTo(request.getQuantidade()) < 0) {
-            throw new IllegalArgumentException("Stock insuficiente.");
-        }
-
         GastoMaterial gasto = new GastoMaterial();
         gasto.setIdEncomenda(request.getIdEncomenda());
         gasto.setIdMaterial(request.getIdMaterial());

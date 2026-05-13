@@ -1,7 +1,6 @@
 package com.teuprojeto.projeto.service;
 
 import com.teuprojeto.projeto.entity.LinhaEncomenda;
-import com.teuprojeto.projeto.entity.LinhaEncomendaId;
 import com.teuprojeto.projeto.repository.LinhaEncomendaRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +20,7 @@ public class LinhaEncomendaService {
         return linhaEncomendaRepository.findAll();
     }
 
-    public Optional<LinhaEncomenda> procurarPorId(LinhaEncomendaId id) {
+    public Optional<LinhaEncomenda> procurarPorId(Long id) {
         return linhaEncomendaRepository.findById(id);
     }
 
@@ -29,7 +28,7 @@ public class LinhaEncomendaService {
         return linhaEncomendaRepository.save(linhaEncomenda);
     }
 
-    public void apagar(LinhaEncomendaId id) {
+    public void apagar(Long id) {
         linhaEncomendaRepository.deleteById(id);
     }
 }

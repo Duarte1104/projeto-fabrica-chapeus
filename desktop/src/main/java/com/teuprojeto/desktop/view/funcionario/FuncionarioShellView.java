@@ -62,7 +62,6 @@ public class FuncionarioShellView {
 
         addMenuButton(menuBox, "Dashboard", FuncionarioPage.DASHBOARD);
         addMenuButton(menuBox, "Minhas Encomendas", FuncionarioPage.MINHAS_ENCOMENDAS);
-        addMenuButton(menuBox, "Gastos de Material", FuncionarioPage.GASTOS_MATERIAL);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -109,7 +108,6 @@ public class FuncionarioShellView {
             case DASHBOARD -> new FuncionarioDashboardPage(this).getView();
             case MINHAS_ENCOMENDAS -> new FuncionarioMinhasEncomendasPage(this).getView();
             case ATUALIZAR_PRODUCAO -> new FuncionarioAtualizarProducaoPage(this).getView();
-            case GASTOS_MATERIAL -> new FuncionarioGastosMaterialPage(this).getView();
         };
 
         contentArea.getChildren().setAll(pageView);
@@ -128,9 +126,6 @@ public class FuncionarioShellView {
     }
 
     public Long getFuncionarioId() {
-        if (user.getEmail() != null && user.getEmail().equalsIgnoreCase("funcionario@email.com")) {
-            return 1L;
-        }
         return 1L;
     }
 

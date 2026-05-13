@@ -62,6 +62,7 @@ public class GestorShellView {
 
         addMenuButton(menuBox, "Dashboard", GestorPage.DASHBOARD);
         addMenuButton(menuBox, "Stock", GestorPage.STOCK);
+        addMenuButton(menuBox, "Chapéus", GestorPage.CHAPEUS);
         addMenuButton(menuBox, "Faturação", GestorPage.FATURACAO);
         addMenuButton(menuBox, "Despesas", GestorPage.DESPESAS);
         addMenuButton(menuBox, "Balanço", GestorPage.BALANCO);
@@ -110,6 +111,7 @@ public class GestorShellView {
         Parent pageView = switch (page) {
             case DASHBOARD -> new GestorDashboardPage(this).getView();
             case STOCK -> new GestorStockPage(this).getView();
+            case CHAPEUS -> new GestorChapeusPage(this).getView();
             case NOVO_MATERIAL -> new GestorNovoMaterialPage(this).getView();
             case EDITAR_MATERIAL -> new GestorEditarMaterialPage(this).getView();
             case FATURACAO -> new GestorFaturacaoPage(this).getView();

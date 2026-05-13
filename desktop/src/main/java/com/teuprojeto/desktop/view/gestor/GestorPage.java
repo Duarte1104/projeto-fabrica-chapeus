@@ -5,6 +5,7 @@ public enum GestorPage {
     STOCK,
     NOVO_MATERIAL,
     EDITAR_MATERIAL,
+    CHAPEUS,
     FATURACAO,
     DESPESAS,
     NOVA_DESPESA,

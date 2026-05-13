@@ -1,7 +1,5 @@
 package pt.projeto.fabricachapeus.web.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
@@ -52,7 +50,11 @@ public class BackendAuthService {
 
     public List<ChapeuDto> listarChapeus() {
         try {
-            ChapeuDto[] chapeus = restTemplate.getForObject(backendBaseUrl + "/chapeus", ChapeuDto[].class);
+            ChapeuDto[] chapeus = restTemplate.getForObject(
+                    backendBaseUrl + "/chapeus",
+                    ChapeuDto[].class
+            );
+
             return chapeus == null ? List.of() : List.of(chapeus);
         } catch (RestClientException e) {
             throw new IllegalStateException("Não foi possível carregar o catálogo de chapéus.");
@@ -64,6 +66,82 @@ public class BackendAuthService {
             restTemplate.postForObject(backendBaseUrl + "/encomendas", request, Object.class);
         } catch (HttpStatusCodeException e) {
             throw new IllegalArgumentException("Não foi possível criar a encomenda. Verifica os dados preenchidos.");
+        }
+    }
+
+    public List<EncomendaDto> listarEncomendasCliente(Integer idCliente) {
+        try {
+            EncomendaDto[] encomendas = restTemplate.getForObject(
+                    backendBaseUrl + "/encomendas/cliente/" + idCliente,
+                    EncomendaDto[].class
+            );
+
+            return encomendas == null ? List.of() : List.of(encomendas);
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível carregar as encomendas.");
+        }
+    }
+
+    public List<LinhaEncomendaDto> listarLinhasEncomenda(Long idEncomenda) {
+        try {
+            LinhaEncomendaDto[] linhas = restTemplate.getForObject(
+                    backendBaseUrl + "/encomendas/" + idEncomenda + "/linhas",
+                    LinhaEncomendaDto[].class
+            );
+
+            return linhas == null ? List.of() : List.of(linhas);
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível carregar as linhas da encomenda.");
+        }
+    }
+
+    public List<DesignEncomendaDto> listarDesignsDaEncomenda(Long idEncomenda) {
+        try {
+            DesignEncomendaDto[] designs = restTemplate.getForObject(
+                    backendBaseUrl + "/designs/encomenda/" + idEncomenda,
+                    DesignEncomendaDto[].class
+            );
+
+            return designs == null ? List.of() : List.of(designs);
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível carregar os designs.");
+        }
+    }
+
+    public List<DesignImagemDto> listarImagensDesign(Long idDesign) {
+        try {
+            DesignImagemDto[] imagens = restTemplate.getForObject(
+                    backendBaseUrl + "/designs/" + idDesign + "/imagens",
+                    DesignImagemDto[].class
+            );
+
+            return imagens == null ? List.of() : List.of(imagens);
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível carregar as imagens do design.");
+        }
+    }
+
+    public void aprovarDesign(Long idDesign) {
+        try {
+            restTemplate.patchForObject(
+                    backendBaseUrl + "/designs/" + idDesign + "/estado/APROVADO_CLIENTE",
+                    null,
+                    Object.class
+            );
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível aprovar o design.");
+        }
+    }
+
+    public void rejeitarDesign(Long idDesign) {
+        try {
+            restTemplate.patchForObject(
+                    backendBaseUrl + "/designs/" + idDesign + "/estado/REJEITADO_CLIENTE",
+                    null,
+                    Object.class
+            );
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível rejeitar o design.");
         }
     }
 }

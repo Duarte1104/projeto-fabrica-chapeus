@@ -3,14 +3,17 @@ package com.teuprojeto.desktop.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teuprojeto.desktop.api.ApiConfig;
-import com.teuprojeto.desktop.dto.CriarDesignEncomendaRequestDto;
 import com.teuprojeto.desktop.dto.DesignEncomendaDto;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DesignApiService {
@@ -46,15 +49,22 @@ public class DesignApiService {
         }
     }
 
-    public DesignEncomendaDto criar(CriarDesignEncomendaRequestDto dto) {
+    public DesignEncomendaDto criar(BigDecimal idEncomenda, String descricaoDesigner, List<Path> imagens) {
         try {
-            String body = objectMapper.writeValueAsString(dto);
+            String boundary = "----DesignBoundary" + System.currentTimeMillis();
+
+            HttpRequest.BodyPublisher body = criarMultipartBody(
+                    idEncomenda,
+                    descricaoDesigner,
+                    imagens,
+                    boundary
+            );
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(ApiConfig.BASE_URL + "/designs"))
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .header("Content-Type", "application/json")
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
                     .header("Accept", "application/json")
+                    .POST(body)
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -67,6 +77,7 @@ public class DesignApiService {
             }
 
             return objectMapper.readValue(response.body(), DesignEncomendaDto.class);
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Não foi possível criar a proposta de design.", e);
@@ -99,5 +110,46 @@ public class DesignApiService {
         } catch (IOException e) {
             throw new RuntimeException("Não foi possível mudar o estado do design.", e);
         }
+    }
+
+    private HttpRequest.BodyPublisher criarMultipartBody(
+            BigDecimal idEncomenda,
+            String descricaoDesigner,
+            List<Path> imagens,
+            String boundary
+    ) throws IOException {
+
+        List<byte[]> partes = new ArrayList<>();
+
+        adicionarCampoTexto(partes, boundary, "idEncomenda", idEncomenda.toPlainString());
+        adicionarCampoTexto(partes, boundary, "descricaoDesigner", descricaoDesigner);
+
+        for (Path imagem : imagens) {
+            String mimeType = Files.probeContentType(imagem);
+            if (mimeType == null) {
+                mimeType = "application/octet-stream";
+            }
+
+            partes.add((
+                    "--" + boundary + "\r\n" +
+                            "Content-Disposition: form-data; name=\"imagens\"; filename=\"" + imagem.getFileName() + "\"\r\n" +
+                            "Content-Type: " + mimeType + "\r\n\r\n"
+            ).getBytes());
+
+            partes.add(Files.readAllBytes(imagem));
+            partes.add("\r\n".getBytes());
+        }
+
+        partes.add(("--" + boundary + "--\r\n").getBytes());
+
+        return HttpRequest.BodyPublishers.ofByteArrays(partes);
+    }
+
+    private void adicionarCampoTexto(List<byte[]> partes, String boundary, String nomeCampo, String valor) {
+        partes.add((
+                "--" + boundary + "\r\n" +
+                        "Content-Disposition: form-data; name=\"" + nomeCampo + "\"\r\n\r\n" +
+                        valor + "\r\n"
+        ).getBytes());
     }
 }

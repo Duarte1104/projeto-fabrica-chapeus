@@ -3,12 +3,12 @@ package pt.projeto.fabricachapeus.web.controller;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import pt.projeto.fabricachapeus.web.dto.*;
 import pt.projeto.fabricachapeus.web.service.BackendAuthService;
 
-import java.util.List;
+import java.util.*;
 
 @Controller
 public class ClienteController {
@@ -27,18 +27,22 @@ public class ClienteController {
     @GetMapping("/catalogo")
     public String catalogo(HttpSession session, Model model) {
         String pagina = protegerPagina(session, model, "catalogo");
+
         if ("catalogo".equals(pagina)) {
             model.addAttribute("chapeus", backendAuthService.listarChapeus());
         }
+
         return pagina;
     }
 
     @GetMapping("/nova-encomenda")
     public String novaEncomenda(HttpSession session, Model model) {
         String pagina = protegerPagina(session, model, "nova-encomenda");
+
         if ("nova-encomenda".equals(pagina)) {
             model.addAttribute("chapeus", backendAuthService.listarChapeus());
         }
+
         return pagina;
     }
 
@@ -107,11 +111,73 @@ public class ClienteController {
     public String encomendas(HttpSession session, Model model, String sucesso) {
         String pagina = protegerPagina(session, model, "encomendas");
 
-        if ("encomendas".equals(pagina) && sucesso != null) {
+        if (!"encomendas".equals(pagina)) {
+            return pagina;
+        }
+
+        Object clienteIdObj = session.getAttribute("clienteId");
+
+        if (clienteIdObj == null) {
+            return "redirect:/login";
+        }
+
+        Integer clienteId = Integer.valueOf(clienteIdObj.toString());
+
+        List<EncomendaDto> encomendas = backendAuthService.listarEncomendasCliente(clienteId);
+        List<Map<String, Object>> encomendasDetalhadas = new ArrayList<>();
+
+        for (EncomendaDto encomenda : encomendas) {
+            Map<String, Object> dados = new HashMap<>();
+
+            dados.put("encomenda", encomenda);
+            dados.put("estadoTexto", estadoTexto(encomenda.getIdestado()));
+            dados.put("linhas", backendAuthService.listarLinhasEncomenda(encomenda.getNum()));
+
+            List<DesignEncomendaDto> designs = backendAuthService.listarDesignsDaEncomenda(encomenda.getNum());
+            List<Map<String, Object>> designsDetalhados = new ArrayList<>();
+
+            for (DesignEncomendaDto design : designs) {
+                Map<String, Object> designMap = new HashMap<>();
+                designMap.put("design", design);
+                designMap.put("imagens", backendAuthService.listarImagensDesign(design.getId()));
+                designsDetalhados.add(designMap);
+            }
+
+            dados.put("designs", designsDetalhados);
+            encomendasDetalhadas.add(dados);
+        }
+
+        model.addAttribute("encomendas", encomendasDetalhadas);
+
+        if (sucesso != null) {
             model.addAttribute("sucesso", "Encomenda criada com sucesso.");
         }
 
-        return pagina;
+        return "encomendas";
+    }
+
+    @PostMapping("/designs/{id}/aprovar")
+    public String aprovarDesign(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            backendAuthService.aprovarDesign(id);
+            redirectAttributes.addFlashAttribute("sucesso", "Design aprovado com sucesso.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+
+        return "redirect:/encomendas";
+    }
+
+    @PostMapping("/designs/{id}/rejeitar")
+    public String rejeitarDesign(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            backendAuthService.rejeitarDesign(id);
+            redirectAttributes.addFlashAttribute("sucesso", "Design rejeitado com sucesso.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+
+        return "redirect:/encomendas";
     }
 
     @GetMapping("/faturas")
@@ -170,6 +236,20 @@ public class ClienteController {
         model.addAttribute("clienteId", session.getAttribute("clienteId"));
         model.addAttribute("clienteNome", session.getAttribute("clienteNome"));
         model.addAttribute("clienteEmail", session.getAttribute("clienteEmail"));
+    }
+
+    private String estadoTexto(Long idEstado) {
+        if (idEstado == null) {
+            return "Sem estado";
+        }
+
+        return switch (idEstado.intValue()) {
+            case 1 -> "Aguarda design";
+            case 2 -> "Em preparação";
+            case 3 -> "Pronta";
+            case 4 -> "Paga";
+            default -> "Estado " + idEstado;
+        };
     }
 
     private boolean isBlank(String value) {

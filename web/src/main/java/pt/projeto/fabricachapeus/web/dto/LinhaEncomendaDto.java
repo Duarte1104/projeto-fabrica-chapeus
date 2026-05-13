@@ -1,15 +1,8 @@
-package com.teuprojeto.projeto.entity;
+package pt.projeto.fabricachapeus.web.dto;
 
-import jakarta.persistence.*;
+public class LinhaEncomendaDto {
 
-@Entity
-@Table(name = "linha_encomenda")
-public class LinhaEncomenda {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private Long numencomenda;
     private Long codchapeu;
     private Long quantidade;
@@ -24,36 +17,40 @@ public class LinhaEncomenda {
         return numencomenda;
     }
 
-    public void setNumencomenda(Long numencomenda) {
-        this.numencomenda = numencomenda;
-    }
-
     public Long getCodchapeu() {
         return codchapeu;
-    }
-
-    public void setCodchapeu(Long codchapeu) {
-        this.codchapeu = codchapeu;
     }
 
     public Long getQuantidade() {
         return quantidade;
     }
 
-    public void setQuantidade(Long quantidade) {
-        this.quantidade = quantidade;
-    }
-
     public String getTamanho() {
         return tamanho;
     }
 
-    public void setTamanho(String tamanho) {
-        this.tamanho = tamanho;
-    }
-
     public String getCores() {
         return cores;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setNumencomenda(Long numencomenda) {
+        this.numencomenda = numencomenda;
+    }
+
+    public void setCodchapeu(Long codchapeu) {
+        this.codchapeu = codchapeu;
+    }
+
+    public void setQuantidade(Long quantidade) {
+        this.quantidade = quantidade;
+    }
+
+    public void setTamanho(String tamanho) {
+        this.tamanho = tamanho;
     }
 
     public void setCores(String cores) {

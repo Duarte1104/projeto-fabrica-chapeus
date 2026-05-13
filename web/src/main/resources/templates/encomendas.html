@@ -2,7 +2,7 @@
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Minhas Encomendas - Área do Cliente</title>
+    <title>Minhas Encomendas</title>
     <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -28,26 +28,137 @@
     </aside>
 
     <main class="client-main">
+
         <header class="client-topbar">
             <div>
                 <h2>Minhas Encomendas</h2>
-                <p>Consulte aqui as suas encomendas realizadas.</p>
+                <p>Acompanhe o estado das suas encomendas e propostas de design.</p>
             </div>
 
-            <a th:href="@{/nova-encomenda}" class="btn-header">Nova Encomenda</a>
+            <a th:href="@{/nova-encomenda}" class="btn-header">
+                Nova Encomenda
+            </a>
         </header>
 
-        <div class="alert alert-success" th:if="${sucesso}" th:text="${sucesso}"></div>
+        <div class="alert alert-success"
+             th:if="${sucesso}"
+             th:text="${sucesso}">
+        </div>
 
-        <section class="dashboard-card">
-            <h3>Encomenda submetida</h3>
-            <p>
-                As encomendas criadas pela Web ficam registadas no sistema interno da fábrica.
-                A listagem detalhada com dados reais será ligada no próximo passo.
-            </p>
-            <br>
-            <a th:href="@{/catalogo}" class="card-link">Ver catálogo</a>
-        </section>
+        <div class="orders-wrapper">
+
+            <section class="order-card"
+                     th:each="item : ${encomendas}">
+
+                <div class="order-header">
+
+                    <div>
+                        <h3>
+                            Encomenda #
+                            <span th:text="${item.encomenda.num}"></span>
+                        </h3>
+
+                        <p>
+                            Entrega:
+                            <strong th:text="${item.encomenda.dataEntrega}"></strong>
+                        </p>
+                    </div>
+
+                    <div class="status-badge"
+                         th:text="${item.encomenda.design ? 'Com Design' : 'Sem Design'}">
+                    </div>
+                </div>
+
+                <div class="order-section">
+
+                    <h4>Linhas da encomenda</h4>
+
+                    <div class="line-card"
+                         th:each="linha : ${item.linhas}">
+
+                        <p>
+                            <strong>Chapéu:</strong>
+                            <span th:text="${linha.codchapeu}"></span>
+                        </p>
+
+                        <p>
+                            <strong>Quantidade:</strong>
+                            <span th:text="${linha.quantidade}"></span>
+                        </p>
+
+                        <p>
+                            <strong>Tamanho:</strong>
+                            <span th:text="${linha.tamanho}"></span>
+                        </p>
+
+                        <p>
+                            <strong>Cores:</strong>
+                            <span th:text="${linha.cores}"></span>
+                        </p>
+
+                    </div>
+                </div>
+
+                <div class="order-section"
+                     th:if="${item.designs != null and !item.designs.isEmpty()}">
+
+                    <h4>Propostas de Design</h4>
+
+                    <div class="design-card"
+                         th:each="designItem : ${item.designs}">
+
+                        <div class="design-header">
+
+                            <div>
+                                <strong>
+                                    Estado:
+                                    <span th:text="${designItem.design.estadoDesign}"></span>
+                                </strong>
+                            </div>
+
+                        </div>
+
+                        <p class="design-description"
+                           th:text="${designItem.design.descricaoDesigner}">
+                        </p>
+
+                        <div class="design-gallery">
+
+                            <img th:each="imagem : ${designItem.imagens}"
+                                 th:src="${imagem.urlImagem}"
+                                 alt="Imagem do design">
+
+                        </div>
+
+                        <div class="design-actions"
+                             th:if="${designItem.design.estadoDesign == 'ENVIADO_CLIENTE'}">
+
+                            <form method="post"
+                                  th:action="@{/designs/{id}/aprovar(id=${designItem.design.id})}">
+
+                                <button class="approve-btn" type="submit">
+                                    Aprovar
+                                </button>
+                            </form>
+
+                            <form method="post"
+                                  th:action="@{/designs/{id}/rejeitar(id=${designItem.design.id})}">
+
+                                <button class="reject-btn" type="submit">
+                                    Rejeitar
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
     </main>
 
 </div>

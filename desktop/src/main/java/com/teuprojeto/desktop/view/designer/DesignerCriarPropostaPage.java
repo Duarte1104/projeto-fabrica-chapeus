@@ -1,8 +1,9 @@
 package com.teuprojeto.desktop.view.designer;
 
-import com.teuprojeto.desktop.dto.CriarDesignEncomendaRequestDto;
 import com.teuprojeto.desktop.dto.DesignEncomendaDto;
 import com.teuprojeto.desktop.service.DesignApiService;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -13,6 +14,8 @@ import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.util.List;
 
 public class DesignerCriarPropostaPage {
 
@@ -54,19 +57,49 @@ public class DesignerCriarPropostaPage {
         descricaoDesigner.setPromptText("Descreve a proposta do design...");
         descricaoDesigner.setPrefRowCount(8);
 
-        TextField ficheiroField = new TextField();
-        ficheiroField.setPromptText("Nenhum ficheiro selecionado");
-        ficheiroField.setEditable(false);
+        ObservableList<File> imagensSelecionadas = FXCollections.observableArrayList();
 
-        Button escolherFicheiro = secondaryButton("Escolher Ficheiro");
-        escolherFicheiro.setOnAction(e -> {
-            FileChooser chooser = new FileChooser();
-            chooser.setTitle("Selecionar ficheiro de design");
-            File file = chooser.showOpenDialog(null);
-            if (file != null) {
-                ficheiroField.setText(file.getAbsolutePath());
+        ListView<File> imagensListView = new ListView<>(imagensSelecionadas);
+        imagensListView.setPrefHeight(130);
+        imagensListView.setPlaceholder(new Label("Nenhuma imagem selecionada."));
+        imagensListView.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(File file, boolean empty) {
+                super.updateItem(file, empty);
+                setText(empty || file == null ? null : file.getName());
             }
         });
+
+        Button escolherImagens = secondaryButton("Escolher Imagens");
+        escolherImagens.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Selecionar imagens do design");
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter(
+                            "Imagens",
+                            "*.png",
+                            "*.jpg",
+                            "*.jpeg",
+                            "*.webp"
+                    )
+            );
+
+            List<File> files = chooser.showOpenMultipleDialog(null);
+
+            if (files != null && !files.isEmpty()) {
+                imagensSelecionadas.addAll(files);
+            }
+        });
+
+        Button removerImagem = secondaryButton("Remover Imagem");
+        removerImagem.setOnAction(e -> {
+            File selecionado = imagensListView.getSelectionModel().getSelectedItem();
+            if (selecionado != null) {
+                imagensSelecionadas.remove(selecionado);
+            }
+        });
+
+        HBox botoesImagens = new HBox(10, escolherImagens, removerImagem);
 
         VBox formCard = card();
         Label formTitle = sectionTitle("Proposta");
@@ -74,10 +107,10 @@ public class DesignerCriarPropostaPage {
                 formTitle,
                 new Label("Descrição do designer"),
                 descricaoDesigner,
-                new Label("Ficheiro"),
-                new HBox(10, ficheiroField, escolherFicheiro)
+                new Label("Imagens da proposta"),
+                imagensListView,
+                botoesImagens
         );
-        HBox.setHgrow(ficheiroField, Priority.ALWAYS);
 
         Button guardar = primaryButton("Guardar Proposta");
         Button cancelar = secondaryButton("Cancelar");
@@ -90,21 +123,29 @@ public class DesignerCriarPropostaPage {
                 return;
             }
 
-            CriarDesignEncomendaRequestDto dto = new CriarDesignEncomendaRequestDto();
-            dto.setIdEncomenda(BigDecimal.valueOf(pedido.getEncomendaId()));
-            dto.setDescricaoDesigner(descricaoDesigner.getText().trim());
-            dto.setFicheiroDesign(ficheiroField.getText() == null || ficheiroField.getText().isBlank()
-                    ? null
-                    : ficheiroField.getText().trim());
+            if (imagensSelecionadas.isEmpty()) {
+                mostrarErro("Seleciona pelo menos uma imagem da proposta.");
+                return;
+            }
+
+            List<Path> imagens = imagensSelecionadas.stream()
+                    .map(File::toPath)
+                    .toList();
 
             guardar.setDisable(true);
             cancelar.setDisable(true);
+            escolherImagens.setDisable(true);
+            removerImagem.setDisable(true);
             estado.setText("A guardar proposta...");
 
             Task<DesignEncomendaDto> task = new Task<>() {
                 @Override
                 protected DesignEncomendaDto call() {
-                    return designApiService.criar(dto);
+                    return designApiService.criar(
+                            BigDecimal.valueOf(pedido.getEncomendaId()),
+                            descricaoDesigner.getText().trim(),
+                            imagens
+                    );
                 }
             };
 
@@ -112,10 +153,12 @@ public class DesignerCriarPropostaPage {
                 estado.setText("Proposta criada com sucesso.");
                 guardar.setDisable(false);
                 cancelar.setDisable(false);
+                escolherImagens.setDisable(false);
+                removerImagem.setDisable(false);
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setHeaderText("Proposta criada");
-                alert.setContentText("A proposta foi enviada para decisão fictícia do cliente.");
+                alert.setContentText("A proposta foi enviada para o cliente.");
                 alert.showAndWait();
 
                 shell.navigateTo(DesignerPage.HISTORICO);
@@ -125,6 +168,8 @@ public class DesignerCriarPropostaPage {
                 estado.setText("Erro ao guardar proposta.");
                 guardar.setDisable(false);
                 cancelar.setDisable(false);
+                escolherImagens.setDisable(false);
+                removerImagem.setDisable(false);
                 mostrarErro(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
             });
 

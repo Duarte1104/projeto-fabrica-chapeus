@@ -124,17 +124,13 @@ public class FuncionarioMinhasEncomendasPage {
             shell.navigateTo(FuncionarioPage.ATUALIZAR_PRODUCAO);
         });
 
-        Button materiais = FuncionarioUiFactory.secondaryButton("Gastos Material");
-        materiais.setOnAction(e -> {
-            shell.setEncomendaSelecionada(encomenda);
-            shell.navigateTo(FuncionarioPage.GASTOS_MATERIAL);
-        });
-
-        top.getChildren().addAll(produto, prioridade, estado, spacer, atualizar, materiais);
+        top.getChildren().addAll(produto, prioridade, estado, spacer, atualizar);
 
         Label encomendaLabel = new Label("Encomenda: " + encomenda.getCodigoEncomenda());
         Label cliente = new Label("Cliente: " + encomenda.getCliente());
         Label quantidade = new Label("Quantidade total: " + encomenda.getQuantidadeTotal());
+        Label avisoMaterial = new Label("Materiais descontados automaticamente no momento da criação da encomenda.");
+        avisoMaterial.setStyle("-fx-text-fill: #64748b; -fx-font-size: 12;");
 
         Label progresso = new Label("Progresso: " + encomenda.getResumoEtapas());
         ProgressBar bar = new ProgressBar(encomenda.getProgresso());
@@ -149,7 +145,7 @@ public class FuncionarioMinhasEncomendasPage {
 
         info.getChildren().addAll(prazo);
 
-        card.getChildren().addAll(top, encomendaLabel, cliente, quantidade, progresso, bar, info);
+        card.getChildren().addAll(top, encomendaLabel, cliente, quantidade, avisoMaterial, progresso, bar, info);
         return card;
     }
 

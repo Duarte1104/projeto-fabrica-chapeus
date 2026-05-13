@@ -159,7 +159,7 @@ public class FuncionarioDashboardPage {
         Button materiais = FuncionarioUiFactory.secondaryButton("Gastos Material");
         materiais.setOnAction(e -> {
             shell.setEncomendaSelecionada(encomenda);
-            shell.navigateTo(FuncionarioPage.GASTOS_MATERIAL);
+            shell.navigateTo(FuncionarioPage.MINHAS_ENCOMENDAS);
         });
 
         HBox botoes = new HBox(10, atualizar, materiais);
