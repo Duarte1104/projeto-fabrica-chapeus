@@ -1,19 +1,29 @@
 package com.teuprojeto.desktop.view.funcionario;
 
 import com.teuprojeto.desktop.dto.AtualizarProducaoEncomendaRequestDto;
+import com.teuprojeto.desktop.dto.DesignEncomendaDto;
+import com.teuprojeto.desktop.dto.DesignEncomendaImagemDto;
+import com.teuprojeto.desktop.service.DesignApiService;
 import com.teuprojeto.desktop.service.ProducaoApiService;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+
+import java.util.Comparator;
+import java.util.List;
 
 public class FuncionarioAtualizarProducaoPage {
 
     private final FuncionarioShellView shell;
     private final ProducaoApiService producaoApiService = new ProducaoApiService();
+    private final DesignApiService designApiService = new DesignApiService();
 
     public FuncionarioAtualizarProducaoPage(FuncionarioShellView shell) {
         this.shell = shell;
@@ -45,6 +55,8 @@ public class FuncionarioAtualizarProducaoPage {
                 new Label("Quantidade total: " + encomenda.getQuantidadeTotal()),
                 new Label("Estado: " + encomenda.getEstado())
         );
+
+        VBox designCard = criarCardDesignAprovado(encomenda);
 
         GridPane etapas = new GridPane();
         etapas.setHgap(16);
@@ -161,8 +173,126 @@ public class FuncionarioAtualizarProducaoPage {
 
         HBox botoes = new HBox(10, guardar, concluir, cancelar);
 
-        root.getChildren().addAll(dados, etapasCard, observacoesCard, estado, botoes);
+        if (designCard != null) {
+            root.getChildren().addAll(dados, designCard, etapasCard, observacoesCard, estado, botoes);
+        } else {
+            root.getChildren().addAll(dados, etapasCard, observacoesCard, estado, botoes);
+        }
+
         return FuncionarioUiFactory.wrapInScroll(root);
+    }
+
+    private VBox criarCardDesignAprovado(FuncionarioEncomendaRow encomenda) {
+        if (!encomenda.isPrecisaPersonalizacao()) {
+            return null;
+        }
+
+        VBox card = FuncionarioUiFactory.createCard();
+
+        Label estado = new Label("A carregar design aprovado...");
+        estado.setStyle("-fx-text-fill: #666666;");
+
+        card.getChildren().addAll(
+                sectionTitle("Design aprovado pelo cliente"),
+                estado
+        );
+
+        Task<DesignInfo> task = new Task<>() {
+            @Override
+            protected DesignInfo call() {
+                List<DesignEncomendaDto> designs =
+                        designApiService.listarPorEncomenda(encomenda.getIdEncomenda());
+
+                DesignEncomendaDto aprovado = designs.stream()
+                        .filter(d -> "APROVADO_CLIENTE".equalsIgnoreCase(d.getEstadoDesign()))
+                        .max(Comparator.comparing(d -> d.getDataCriacao() == null ? "" : d.getDataCriacao()))
+                        .orElse(null);
+
+                if (aprovado == null) {
+                    return null;
+                }
+
+                List<DesignEncomendaImagemDto> imagens =
+                        designApiService.listarImagens(aprovado.getId());
+
+                return new DesignInfo(aprovado, imagens);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            DesignInfo info = task.getValue();
+
+            if (info == null) {
+                estado.setText("Ainda não existe design aprovado para esta encomenda.");
+                return;
+            }
+
+            estado.setText("Design carregado.");
+
+            Label descricaoTitulo = new Label("Descrição do designer:");
+            descricaoTitulo.setStyle("-fx-font-weight: bold;");
+
+            TextArea descricao = new TextArea(info.design().getDescricaoDesigner());
+            descricao.setEditable(false);
+            descricao.setWrapText(true);
+            descricao.setPrefRowCount(4);
+
+            Label imagensTitulo = new Label("Imagens da proposta aprovada:");
+            imagensTitulo.setStyle("-fx-font-weight: bold;");
+
+            FlowPane galeria = new FlowPane();
+            galeria.setHgap(12);
+            galeria.setVgap(12);
+
+            if (info.imagens().isEmpty()) {
+                galeria.getChildren().add(new Label("Sem imagens associadas."));
+            } else {
+                for (DesignEncomendaImagemDto imagem : info.imagens()) {
+                    ImageView imageView = criarImagemDesign(imagem.getUrlImagem());
+                    galeria.getChildren().add(imageView);
+                }
+            }
+
+            card.getChildren().addAll(
+                    descricaoTitulo,
+                    descricao,
+                    imagensTitulo,
+                    galeria
+            );
+        });
+
+        task.setOnFailed(event -> {
+            estado.setText("Erro ao carregar design aprovado.");
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Erro");
+            alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            alert.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+
+        return card;
+    }
+
+    private ImageView criarImagemDesign(String url) {
+        Image image = new Image(url, true);
+
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(220);
+        imageView.setFitHeight(160);
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
+
+        imageView.setStyle(
+                "-fx-background-color: #f3f4f6;" +
+                        "-fx-border-color: #d1d5db;" +
+                        "-fx-border-radius: 8;" +
+                        "-fx-background-radius: 8;"
+        );
+
+        return imageView;
     }
 
     private void enviarAtualizacao(FuncionarioEncomendaRow encomenda,
@@ -243,5 +373,11 @@ public class FuncionarioAtualizarProducaoPage {
         Label label = new Label(text);
         label.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
         return label;
+    }
+
+    private record DesignInfo(
+            DesignEncomendaDto design,
+            List<DesignEncomendaImagemDto> imagens
+    ) {
     }
 }

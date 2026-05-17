@@ -28,10 +28,11 @@
     </aside>
 
     <main class="client-main">
+
         <header class="client-topbar">
             <div>
                 <h2>Nova Encomenda</h2>
-                <p>Escolha um chapéu existente no catálogo e personalize a encomenda.</p>
+                <p>Adicione um ou vários chapéus à mesma encomenda.</p>
             </div>
         </header>
 
@@ -40,45 +41,61 @@
 
             <form method="post" th:action="@{/nova-encomenda}" class="order-form">
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="codChapeu">Chapéu</label>
-                        <select id="codChapeu" name="codChapeu" required>
-                            <option value="">Selecionar chapéu</option>
-                            <option th:each="chapeu : ${chapeus}"
-                                    th:value="${chapeu.cod}"
-                                    th:text="${chapeu.nome + ' - ' + chapeu.precoactvenda + ' €'}">
-                                Chapéu
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="quantidade">Quantidade</label>
-                        <input type="number" id="quantidade" name="quantidade" min="1" placeholder="Ex: 10" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dataEntrega">Data pretendida de entrega</label>
-                        <input type="date" id="dataEntrega" name="dataEntrega" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tamanho">Tamanho</label>
-                        <select id="tamanho" name="tamanho" required>
-                            <option value="">Selecionar tamanho</option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="cores">Cores</label>
-                        <input type="text" id="cores" name="cores" placeholder="Ex: Preto, Branco" required>
-                    </div>
+                <div class="form-group">
+                    <label for="dataEntrega">Data pretendida de entrega</label>
+                    <input type="date" id="dataEntrega" name="dataEntrega" required>
                 </div>
+
+                <h3>Chapéus da encomenda</h3>
+
+                <div id="linhas-container" class="order-lines-form">
+
+                    <div class="order-line-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Chapéu</label>
+                                <select name="codChapeu" required>
+                                    <option value="">Selecionar chapéu</option>
+                                    <option th:each="chapeu : ${chapeus}"
+                                            th:value="${chapeu.cod}"
+                                            th:text="${chapeu.nome + ' - ' + #numbers.formatDecimal(chapeu.precoactvenda, 1, 'POINT', 2, 'COMMA') + ' €'}">
+                                        Chapéu
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Quantidade</label>
+                                <input type="number" name="quantidade" min="1" placeholder="Ex: 10" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Tamanho</label>
+                                <select name="tamanho" required>
+                                    <option value="">Selecionar tamanho</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Cores</label>
+                                <input type="text" name="cores" placeholder="Ex: Preto, Branco" required>
+                            </div>
+                        </div>
+
+                        <button type="button" class="remove-line-button" onclick="removerLinha(this)">
+                            Remover chapéu
+                        </button>
+                    </div>
+
+                </div>
+
+                <button type="button" class="add-line-button" onclick="adicionarLinha()">
+                    + Adicionar outro chapéu
+                </button>
 
                 <div class="form-group checkbox-group">
                     <label>
@@ -103,6 +120,51 @@
     </main>
 
 </div>
+
+<script>
+    function adicionarLinha() {
+        const container = document.getElementById("linhas-container");
+        const primeiraLinha = container.querySelector(".order-line-form");
+        const novaLinha = primeiraLinha.cloneNode(true);
+
+        novaLinha.querySelectorAll("input").forEach(input => {
+            if (input.type !== "checkbox") {
+                input.value = "";
+            }
+        });
+
+        novaLinha.querySelectorAll("select").forEach(select => {
+            select.selectedIndex = 0;
+        });
+
+        container.appendChild(novaLinha);
+        atualizarBotoesRemover();
+    }
+
+    function removerLinha(botao) {
+        const container = document.getElementById("linhas-container");
+        const linhas = container.querySelectorAll(".order-line-form");
+
+        if (linhas.length <= 1) {
+            return;
+        }
+
+        botao.closest(".order-line-form").remove();
+        atualizarBotoesRemover();
+    }
+
+    function atualizarBotoesRemover() {
+        const linhas = document.querySelectorAll(".order-line-form");
+        const mostrar = linhas.length > 1;
+
+        linhas.forEach(linha => {
+            const botao = linha.querySelector(".remove-line-button");
+            botao.style.display = mostrar ? "inline-flex" : "none";
+        });
+    }
+
+    atualizarBotoesRemover();
+</script>
 
 </body>
 </html>

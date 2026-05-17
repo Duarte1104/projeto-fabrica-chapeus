@@ -10,6 +10,8 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.geometry.Pos;
+import com.teuprojeto.desktop.dto.DesignEncomendaDto;
+import com.teuprojeto.desktop.service.DesignApiService;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -25,6 +27,8 @@ public class DesignerPedidosDesignPage {
     private final DesignerShellView shell;
     private final EncomendaApiService encomendaApiService = new EncomendaApiService();
     private final ClienteApiService clienteApiService = new ClienteApiService();
+    private final DesignApiService designApiService =
+            new DesignApiService();
 
     public DesignerPedidosDesignPage(DesignerShellView shell) {
         this.shell = shell;
@@ -133,8 +137,38 @@ public class DesignerPedidosDesignPage {
                                 (a, b) -> a
                         ));
 
+                List<DesignEncomendaDto> designs =
+                        designApiService.listarTodos();
+
+                Map<Long, DesignEncomendaDto> ultimoDesignPorEncomenda =
+                        designs.stream()
+                                .filter(d -> d.getIdEncomenda() != null)
+                                .collect(Collectors.toMap(
+                                        d -> d.getIdEncomenda().longValue(),
+                                        d -> d,
+                                        (a, b) -> {
+                                            if (a.getDataCriacao() == null) return b;
+                                            if (b.getDataCriacao() == null) return a;
+
+                                            return b.getDataCriacao()
+                                                    .compareTo(a.getDataCriacao()) > 0 ? b : a;
+                                        }
+                                ));
+
                 return encomendas.stream()
-                        .filter(e -> Boolean.TRUE.equals(e.getDesign()) && Long.valueOf(1L).equals(e.getIdestado()))
+                        .filter(e -> Boolean.TRUE.equals(e.getDesign()))
+                        .filter(e -> {
+
+                            DesignEncomendaDto design =
+                                    ultimoDesignPorEncomenda.get(e.getNum());
+
+                            if (design == null) {
+                                return true;
+                            }
+
+                            return "REJEITADO_CLIENTE"
+                                    .equalsIgnoreCase(design.getEstadoDesign());
+                        })
                         .map(e -> new PedidoDesignRow(
                                 e.getNum(),
                                 "ENC-" + e.getNum(),

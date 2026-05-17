@@ -10,19 +10,16 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Region; //region aqui
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 public class DesignerHistoricoPage {
 
@@ -62,49 +59,55 @@ public class DesignerHistoricoPage {
 
         TableColumn<HistoricoRow, String> estadoCol = new TableColumn<>("Estado");
         estadoCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getEstado()));
+        estadoCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+
+                setText(formatarEstado(item));
+
+                switch (item.toUpperCase()) {
+                    case "ENVIADO_CLIENTE" -> setStyle(
+                            "-fx-background-color: #fff4d6;" +
+                                    "-fx-text-fill: #a16207;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-alignment: center;"
+                    );
+
+                    case "APROVADO_CLIENTE" -> setStyle(
+                            "-fx-background-color: #dcfce7;" +
+                                    "-fx-text-fill: #166534;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-alignment: center;"
+                    );
+
+                    case "REJEITADO_CLIENTE" -> setStyle(
+                            "-fx-background-color: #fee2e2;" +
+                                    "-fx-text-fill: #991b1b;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-alignment: center;"
+                    );
+
+                    default -> setStyle(
+                            "-fx-font-weight: bold;" +
+                                    "-fx-alignment: center;"
+                    );
+                }
+            }
+        });
 
         TableColumn<HistoricoRow, String> dataCol = new TableColumn<>("Data");
         dataCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDataCriacao()));
 
         ObservableList<HistoricoRow> rows = FXCollections.observableArrayList();
 
-        TableColumn<HistoricoRow, Void> acaoCol = new TableColumn<>("Ações");
-        acaoCol.setCellFactory(col -> new TableCell<>() {
-            private final Button aprovarBtn = new Button("Aprovar");
-            private final Button rejeitarBtn = new Button("Rejeitar");
-            private final HBox box = new HBox(8, aprovarBtn, rejeitarBtn);
-
-            {
-                box.setAlignment(Pos.CENTER);
-                aprovarBtn.setStyle("-fx-background-color: #e8fff0; -fx-text-fill: #0a7a35; -fx-border-color: #9dd5b0; -fx-background-radius: 8; -fx-border-radius: 8;");
-                rejeitarBtn.setStyle("-fx-background-color: #fff0f0; -fx-text-fill: #b13232; -fx-border-color: #e3aaaa; -fx-background-radius: 8; -fx-border-radius: 8;");
-
-                aprovarBtn.setOnAction(e -> mudarEstado(getTableView().getItems().get(getIndex()), "APROVADO_CLIENTE", rows, estado));
-                rejeitarBtn.setOnAction(e -> mudarEstado(getTableView().getItems().get(getIndex()), "REJEITADO_CLIENTE", rows, estado));
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty) {
-                    setGraphic(null);
-                    return;
-                }
-
-                HistoricoRow row = getTableView().getItems().get(getIndex());
-                boolean podeDecidir = "ENVIADO_CLIENTE".equalsIgnoreCase(row.getEstado());
-
-                aprovarBtn.setVisible(podeDecidir);
-                aprovarBtn.setManaged(podeDecidir);
-                rejeitarBtn.setVisible(podeDecidir);
-                rejeitarBtn.setManaged(podeDecidir);
-
-                setGraphic(podeDecidir ? box : null);
-            }
-        });
-
-        table.getColumns().addAll(idCol, encomendaCol, clienteCol, estadoCol, dataCol, acaoCol);
+        table.getColumns().addAll(idCol, encomendaCol, clienteCol, estadoCol, dataCol);
         table.setItems(rows);
 
         atualizar.setOnAction(e -> carregarHistorico(rows, estado));
@@ -115,47 +118,6 @@ public class DesignerHistoricoPage {
         root.getChildren().add(card);
 
         return root;
-    }
-
-    private void mudarEstado(HistoricoRow row, String novoEstado, ObservableList<HistoricoRow> rows, Label estado) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setHeaderText("Confirmar ação");
-        confirm.setContentText("Pretendes marcar o design " + row.getDesignId() + " como " + novoEstado + "?");
-
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
-            return;
-        }
-
-        estado.setText("A atualizar design...");
-
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                designApiService.mudarEstado(row.getId(), novoEstado);
-                return null;
-            }
-        };
-
-        task.setOnSucceeded(event -> {
-            Alert ok = new Alert(Alert.AlertType.INFORMATION);
-            ok.setHeaderText("Estado atualizado");
-            ok.setContentText("O estado do design foi atualizado.");
-            ok.showAndWait();
-
-            carregarHistorico(rows, estado);
-        });
-
-        task.setOnFailed(event -> {
-            estado.setText("Erro ao atualizar design.");
-            Alert erro = new Alert(Alert.AlertType.ERROR);
-            erro.setHeaderText("Erro");
-            erro.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
-            erro.showAndWait();
-        });
-
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
     }
 
     private void carregarHistorico(ObservableList<HistoricoRow> rows, Label estado) {
@@ -198,7 +160,10 @@ public class DesignerHistoricoPage {
 
                             if (encomenda != null) {
                                 numero = "ENC-" + encomenda.getNum();
-                                cliente = mapaClientes.getOrDefault(encomenda.getIdcliente(), "Cliente #" + encomenda.getIdcliente());
+                                cliente = mapaClientes.getOrDefault(
+                                        encomenda.getIdcliente(),
+                                        "Cliente #" + encomenda.getIdcliente()
+                                );
                             }
 
                             return new HistoricoRow(
@@ -216,11 +181,12 @@ public class DesignerHistoricoPage {
 
         task.setOnSucceeded(event -> {
             rows.setAll(task.getValue());
-            estado.setText("Histórico carregado.");
+            estado.setText("Histórico carregado. A aprovação/rejeição é feita pelo cliente na Web.");
         });
 
         task.setOnFailed(event -> {
             estado.setText("Erro ao carregar histórico.");
+
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Erro");
             alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
@@ -230,6 +196,19 @@ public class DesignerHistoricoPage {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private String formatarEstado(String estado) {
+        if (estado == null) {
+            return "-";
+        }
+
+        return switch (estado.toUpperCase()) {
+            case "ENVIADO_CLIENTE" -> "Enviado ao cliente";
+            case "APROVADO_CLIENTE" -> "Aprovado pelo cliente";
+            case "REJEITADO_CLIENTE" -> "Rejeitado pelo cliente";
+            default -> estado;
+        };
     }
 
     private static class HistoricoRow {
@@ -277,21 +256,37 @@ public class DesignerHistoricoPage {
     private VBox pageContainer(String titleText) {
         VBox root = new VBox(18);
         root.setStyle("-fx-padding: 28; -fx-background-color: #efefef;");
+
         Label title = new Label(titleText);
         title.setStyle("-fx-font-size: 28; -fx-font-weight: bold;");
+
         root.getChildren().add(title);
         return root;
     }
 
     private VBox card() {
         VBox box = new VBox(12);
-        box.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 22; -fx-border-color: #e0e0e0; -fx-border-radius: 12;");
+        box.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 12;" +
+                        "-fx-padding: 22;" +
+                        "-fx-border-color: #e0e0e0;" +
+                        "-fx-border-radius: 12;"
+        );
+
         return box;
     }
 
     private Button secondaryButton(String text) {
         Button button = new Button(text);
-        button.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-border-color: #cccccc; -fx-background-radius: 10; -fx-border-radius: 10;");
+        button.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: #cccccc;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-radius: 10;"
+        );
+
         return button;
     }
 }

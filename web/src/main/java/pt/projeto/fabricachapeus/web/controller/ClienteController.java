@@ -50,11 +50,11 @@ public class ClienteController {
     public String criarEncomenda(
             HttpSession session,
             Model model,
-            String codChapeu,
-            String quantidade,
+            @RequestParam("codChapeu") List<String> codChapeus,
+            @RequestParam("quantidade") List<String> quantidades,
+            @RequestParam("tamanho") List<String> tamanhos,
+            @RequestParam("cores") List<String> cores,
             String dataEntrega,
-            String tamanho,
-            String cores,
             String observacoes,
             String design,
             String descricaoDesign
@@ -68,25 +68,53 @@ public class ClienteController {
         adicionarDadosSessaoAoModel(session, model);
 
         try {
-            if (isBlank(codChapeu) || isBlank(quantidade) || isBlank(dataEntrega) || isBlank(tamanho) || isBlank(cores)) {
-                model.addAttribute("erro", "Preenche todos os campos obrigatórios.");
-                model.addAttribute("chapeus", backendAuthService.listarChapeus());
-                return "nova-encomenda";
+            if (isBlank(dataEntrega)) {
+                throw new IllegalArgumentException("Indica a data pretendida de entrega.");
+            }
+
+            if (codChapeus == null || codChapeus.isEmpty()) {
+                throw new IllegalArgumentException("Adiciona pelo menos um chapéu à encomenda.");
+            }
+
+            if (codChapeus.size() != quantidades.size()
+                    || codChapeus.size() != tamanhos.size()
+                    || codChapeus.size() != cores.size()) {
+                throw new IllegalArgumentException("Existem linhas incompletas na encomenda.");
             }
 
             List<ChapeuDto> chapeus = backendAuthService.listarChapeus();
+            List<LinhaEncomendaWebRequest> linhas = new ArrayList<>();
 
-            ChapeuDto chapeuSelecionado = chapeus.stream()
-                    .filter(c -> c.getCod() != null && c.getCod().equals(Long.valueOf(codChapeu)))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Chapéu inválido."));
+            for (int i = 0; i < codChapeus.size(); i++) {
+                String codChapeu = codChapeus.get(i);
+                String quantidade = quantidades.get(i);
+                String tamanho = tamanhos.get(i);
+                String cor = cores.get(i);
 
-            LinhaEncomendaWebRequest linha = new LinhaEncomendaWebRequest();
-            linha.setCodChapeu(chapeuSelecionado.getCod());
-            linha.setQuantidade(Long.valueOf(quantidade));
-            linha.setPrecoUnitario(chapeuSelecionado.getPrecoactvenda());
-            linha.setTamanho(tamanho.trim());
-            linha.setCores(cores.trim());
+                if (isBlank(codChapeu) || isBlank(quantidade) || isBlank(tamanho) || isBlank(cor)) {
+                    throw new IllegalArgumentException("Preenche todos os campos das linhas da encomenda.");
+                }
+
+                ChapeuDto chapeuSelecionado = chapeus.stream()
+                        .filter(c -> c.getCod() != null && c.getCod().equals(Long.valueOf(codChapeu)))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("Chapéu inválido."));
+
+                Long qtd = Long.valueOf(quantidade);
+
+                if (qtd <= 0) {
+                    throw new IllegalArgumentException("A quantidade deve ser superior a zero.");
+                }
+
+                LinhaEncomendaWebRequest linha = new LinhaEncomendaWebRequest();
+                linha.setCodChapeu(chapeuSelecionado.getCod());
+                linha.setQuantidade(qtd);
+                linha.setPrecoUnitario(chapeuSelecionado.getPrecoactvenda());
+                linha.setTamanho(tamanho.trim());
+                linha.setCores(cor.trim());
+
+                linhas.add(linha);
+            }
 
             CriarEncomendaWebRequest request = new CriarEncomendaWebRequest();
             request.setIdCliente(Integer.valueOf(clienteId.toString()));
@@ -94,7 +122,7 @@ public class ClienteController {
             request.setObservacoes(isBlank(observacoes) ? null : observacoes.trim());
             request.setDesign("on".equalsIgnoreCase(design));
             request.setDescricaoDesign("on".equalsIgnoreCase(design) ? descricaoDesign : null);
-            request.setLinhas(List.of(linha));
+            request.setLinhas(linhas);
 
             backendAuthService.criarEncomenda(request);
 
@@ -136,10 +164,10 @@ public class ClienteController {
             List<DesignEncomendaDto> designs = backendAuthService.listarDesignsDaEncomenda(encomenda.getNum());
             List<Map<String, Object>> designsDetalhados = new ArrayList<>();
 
-            for (DesignEncomendaDto design : designs) {
+            for (DesignEncomendaDto designDto : designs) {
                 Map<String, Object> designMap = new HashMap<>();
-                designMap.put("design", design);
-                designMap.put("imagens", backendAuthService.listarImagensDesign(design.getId()));
+                designMap.put("design", designDto);
+                designMap.put("imagens", backendAuthService.listarImagensDesign(designDto.getId()));
                 designsDetalhados.add(designMap);
             }
 
@@ -182,12 +210,109 @@ public class ClienteController {
 
     @GetMapping("/faturas")
     public String faturas(HttpSession session, Model model) {
-        return protegerPagina(session, model, "faturas");
+        String pagina = protegerPagina(session, model, "faturas");
+
+        if (!"faturas".equals(pagina)) {
+            return pagina;
+        }
+
+        Object clienteIdObj = session.getAttribute("clienteId");
+
+        if (clienteIdObj == null) {
+            return "redirect:/login";
+        }
+
+        Integer clienteId = Integer.valueOf(clienteIdObj.toString());
+
+        List<EncomendaDto> encomendas = backendAuthService.listarEncomendasCliente(clienteId);
+        List<Map<String, Object>> faturasDetalhadas = new ArrayList<>();
+
+        for (EncomendaDto encomenda : encomendas) {
+            List<FaturaDto> faturas = backendAuthService.listarFaturasPorEncomenda(encomenda.getNum());
+
+            for (FaturaDto fatura : faturas) {
+                Map<String, Object> dados = new HashMap<>();
+                dados.put("fatura", fatura);
+                dados.put("encomenda", encomenda);
+                faturasDetalhadas.add(dados);
+            }
+        }
+
+        model.addAttribute("faturas", faturasDetalhadas);
+
+        return "faturas";
     }
 
     @GetMapping("/perfil")
     public String perfil(HttpSession session, Model model) {
         return protegerPagina(session, model, "perfil");
+    }
+
+    @GetMapping("/encomendas/{id}")
+    public String detalheEncomenda(
+            @PathVariable Long id,
+            HttpSession session,
+            Model model
+    ) {
+        String pagina = protegerPagina(session, model, "detalhe-encomenda");
+
+        if (!"detalhe-encomenda".equals(pagina)) {
+            return pagina;
+        }
+
+        Object clienteIdObj = session.getAttribute("clienteId");
+
+        if (clienteIdObj == null) {
+            return "redirect:/login";
+        }
+
+        Integer clienteId = Integer.valueOf(clienteIdObj.toString());
+
+        List<EncomendaDto> encomendas =
+                backendAuthService.listarEncomendasCliente(clienteId);
+
+        Map<String, Object> encomendaEncontrada = null;
+
+        for (EncomendaDto encomenda : encomendas) {
+            if (encomenda.getNum().equals(id)) {
+                Map<String, Object> dados = new HashMap<>();
+
+                dados.put("encomenda", encomenda);
+                dados.put("estadoTexto", estadoTexto(encomenda.getIdestado()));
+                dados.put("linhas", backendAuthService.listarLinhasEncomenda(encomenda.getNum()));
+
+                List<DesignEncomendaDto> designs =
+                        backendAuthService.listarDesignsDaEncomenda(encomenda.getNum());
+
+                List<Map<String, Object>> designsDetalhados = new ArrayList<>();
+
+                for (DesignEncomendaDto designDto : designs) {
+                    Map<String, Object> designMap = new HashMap<>();
+                    designMap.put("design", designDto);
+                    designMap.put("imagens", backendAuthService.listarImagensDesign(designDto.getId()));
+                    designsDetalhados.add(designMap);
+                }
+
+                dados.put("designs", designsDetalhados);
+                encomendaEncontrada = dados;
+                break;
+            }
+        }
+
+        if (encomendaEncontrada == null) {
+            return "redirect:/encomendas";
+        }
+
+        Map<Long, String> chapeusPorCod = new HashMap<>();
+
+        for (ChapeuDto chapeu : backendAuthService.listarChapeus()) {
+            chapeusPorCod.put(chapeu.getCod(), chapeu.getNome());
+        }
+
+        model.addAttribute("chapeusPorCod", chapeusPorCod);
+        model.addAttribute("encomenda", encomendaEncontrada);
+
+        return "detalhe-encomenda";
     }
 
     @PostMapping("/perfil/alterar-password")

@@ -8,4 +8,6 @@ import java.util.List;
 public interface DesignEncomendaImagemRepository extends JpaRepository<DesignEncomendaImagem, Long> {
 
     List<DesignEncomendaImagem> findByIdDesignEncomenda(Long idDesignEncomenda);
+
+    void deleteByIdDesignEncomenda(Long idDesignEncomenda);
 }

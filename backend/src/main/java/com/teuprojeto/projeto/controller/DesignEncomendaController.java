@@ -56,4 +56,14 @@ public class DesignEncomendaController {
     public DesignEncomenda mudarEstado(@PathVariable Long id, @PathVariable String novoEstado) {
         return designEncomendaService.mudarEstado(id, novoEstado);
     }
+
+    @PostMapping("/{id}/aprovar")
+    public DesignEncomenda aprovar(@PathVariable Long id) {
+        return designEncomendaService.mudarEstado(id, "APROVADO_CLIENTE");
+    }
+
+    @PostMapping("/{id}/rejeitar")
+    public DesignEncomenda rejeitar(@PathVariable Long id) {
+        return designEncomendaService.mudarEstado(id, "REJEITADO_CLIENTE");
+    }
 }

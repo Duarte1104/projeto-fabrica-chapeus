@@ -123,8 +123,8 @@ public class BackendAuthService {
 
     public void aprovarDesign(Long idDesign) {
         try {
-            restTemplate.patchForObject(
-                    backendBaseUrl + "/designs/" + idDesign + "/estado/APROVADO_CLIENTE",
+            restTemplate.postForObject(
+                    backendBaseUrl + "/designs/" + idDesign + "/aprovar",
                     null,
                     Object.class
             );
@@ -135,13 +135,27 @@ public class BackendAuthService {
 
     public void rejeitarDesign(Long idDesign) {
         try {
-            restTemplate.patchForObject(
-                    backendBaseUrl + "/designs/" + idDesign + "/estado/REJEITADO_CLIENTE",
+            restTemplate.postForObject(
+                    backendBaseUrl + "/designs/" + idDesign + "/rejeitar",
                     null,
                     Object.class
             );
         } catch (RestClientException e) {
             throw new IllegalStateException("Não foi possível rejeitar o design.");
+        }
+    }
+
+    public List<FaturaDto> listarFaturasPorEncomenda(Long idEncomenda) {
+        try {
+            FaturaDto[] faturas = restTemplate.getForObject(
+                    backendBaseUrl + "/faturas/encomenda/" + idEncomenda,
+                    FaturaDto[].class
+            );
+
+            return faturas == null ? List.of() : List.of(faturas);
+
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível carregar as faturas.");
         }
     }
 }

@@ -47,7 +47,13 @@ public class FuncionarioMinhasEncomendasPage {
 
         task.setOnSucceeded(event -> {
             cache.clear();
-            cache.addAll(task.getValue());
+            cache.addAll(
+                    task.getValue().stream()
+                            .filter(e ->
+                                    e.getEstado() != null &&
+                                            e.getEstado().equalsIgnoreCase("Em preparação"))
+                            .toList()
+            );
             atualizarLista(lista, cache, search.getText());
             estado.setText("Encomendas carregadas: " + cache.size());
         });

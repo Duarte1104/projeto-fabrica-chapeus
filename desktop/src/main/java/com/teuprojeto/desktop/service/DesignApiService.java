@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teuprojeto.desktop.api.ApiConfig;
 import com.teuprojeto.desktop.dto.DesignEncomendaDto;
-
+import com.teuprojeto.desktop.dto.DesignEncomendaImagemDto;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -109,6 +109,52 @@ public class DesignApiService {
             throw new RuntimeException("Não foi possível mudar o estado do design.", e);
         } catch (IOException e) {
             throw new RuntimeException("Não foi possível mudar o estado do design.", e);
+        }
+    }
+
+    public List<DesignEncomendaDto> listarPorEncomenda(Long idEncomenda) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ApiConfig.BASE_URL + "/designs/encomenda/" + idEncomenda))
+                .GET()
+                .header("Accept", "application/json")
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("Erro ao listar designs da encomenda. HTTP " + response.statusCode());
+            }
+
+            return objectMapper.readValue(response.body(), new TypeReference<>() {});
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Não foi possível obter os designs da encomenda.", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Não foi possível obter os designs da encomenda.", e);
+        }
+    }
+
+    public List<DesignEncomendaImagemDto> listarImagens(Long idDesign) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ApiConfig.BASE_URL + "/designs/" + idDesign + "/imagens"))
+                .GET()
+                .header("Accept", "application/json")
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("Erro ao listar imagens do design. HTTP " + response.statusCode());
+            }
+
+            return objectMapper.readValue(response.body(), new TypeReference<>() {});
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Não foi possível obter as imagens do design.", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Não foi possível obter as imagens do design.", e);
         }
     }
 

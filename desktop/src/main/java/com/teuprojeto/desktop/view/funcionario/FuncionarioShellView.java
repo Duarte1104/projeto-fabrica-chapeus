@@ -62,6 +62,7 @@ public class FuncionarioShellView {
 
         addMenuButton(menuBox, "Dashboard", FuncionarioPage.DASHBOARD);
         addMenuButton(menuBox, "Minhas Encomendas", FuncionarioPage.MINHAS_ENCOMENDAS);
+        addMenuButton(menuBox, "Histórico", FuncionarioPage.HISTORICO);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -107,6 +108,7 @@ public class FuncionarioShellView {
         Parent pageView = switch (page) {
             case DASHBOARD -> new FuncionarioDashboardPage(this).getView();
             case MINHAS_ENCOMENDAS -> new FuncionarioMinhasEncomendasPage(this).getView();
+            case HISTORICO -> new FuncionarioHistoricoPage(this).getView();
             case ATUALIZAR_PRODUCAO -> new FuncionarioAtualizarProducaoPage(this).getView();
         };
 

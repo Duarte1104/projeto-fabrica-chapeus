@@ -18,6 +18,7 @@
         <nav class="sidebar-menu">
             <a th:href="@{/cliente}" class="active">Dashboard</a>
             <a th:href="@{/catalogo}">Catálogo</a>
+            <a th:href="@{/nova-encomenda}">Nova Encomenda</a>
             <a th:href="@{/encomendas}">Minhas Encomendas</a>
             <a th:href="@{/faturas}">Faturas</a>
             <a th:href="@{/perfil}">Perfil</a>
@@ -34,6 +35,8 @@
                     Acompanhe as suas encomendas, faturas e pedidos personalizados.
                 </p>
             </div>
+
+            <a th:href="@{/nova-encomenda}" class="btn-header">Nova Encomenda</a>
         </header>
 
         <section class="dashboard-grid">
@@ -44,15 +47,15 @@
             </article>
 
             <article class="dashboard-card">
-                <h3>Encomendas</h3>
-                <p>Acompanhe o estado das suas encomendas submetidas.</p>
-                <a th:href="@{/encomendas}" class="card-link">Ver encomendas</a>
+                <h3>Nova Encomenda</h3>
+                <p>Crie uma nova encomenda personalizada a partir dos modelos disponíveis.</p>
+                <a th:href="@{/nova-encomenda}" class="card-link">Criar encomenda</a>
             </article>
 
             <article class="dashboard-card">
-                <h3>Faturas</h3>
-                <p>Consulte documentos associados às suas encomendas.</p>
-                <a th:href="@{/faturas}" class="card-link">Ver faturas</a>
+                <h3>Encomendas</h3>
+                <p>Acompanhe o estado das suas encomendas e propostas de design.</p>
+                <a th:href="@{/encomendas}" class="card-link">Ver encomendas</a>
             </article>
         </section>
     </main>

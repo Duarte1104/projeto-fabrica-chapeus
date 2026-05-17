@@ -18,6 +18,7 @@
         <nav class="sidebar-menu">
             <a th:href="@{/cliente}">Dashboard</a>
             <a th:href="@{/catalogo}">Catálogo</a>
+            <a th:href="@{/nova-encomenda}">Nova Encomenda</a>
             <a th:href="@{/encomendas}">Minhas Encomendas</a>
             <a th:href="@{/faturas}" class="active">Faturas</a>
             <a th:href="@{/perfil}">Perfil</a>
@@ -27,17 +28,86 @@
     </aside>
 
     <main class="client-main">
+
         <header class="client-topbar">
             <div>
                 <h2>Faturas</h2>
                 <p>Consulte as faturas associadas às suas encomendas.</p>
             </div>
+
+            <a th:href="@{/nova-encomenda}" class="btn-header">Nova Encomenda</a>
         </header>
 
-        <section class="dashboard-card">
-            <h3>Ainda não existem faturas disponíveis.</h3>
-            <p>As faturas ficarão disponíveis após validação da encomenda pela fábrica.</p>
+        <section class="empty-state-card" th:if="${faturas == null or faturas.isEmpty()}">
+            <div class="empty-icon">📄</div>
+            <h3>Ainda não existem faturas disponíveis</h3>
+            <p>As faturas ficarão disponíveis após validação e faturação da encomenda pela fábrica.</p>
+            <a th:href="@{/encomendas}" class="card-button">Ver encomendas</a>
         </section>
+
+        <section class="orders-grid" th:if="${faturas != null and !faturas.isEmpty()}">
+
+            <article class="modern-order-card" th:each="item : ${faturas}">
+
+                <div class="modern-order-top">
+                    <div>
+                        <span class="modern-order-number">
+                            Fatura #<span th:text="${item.fatura.id}">1</span>
+                        </span>
+
+                        <h3>
+                            Encomenda #
+                            <span th:text="${item.encomenda.num}">1</span>
+                        </h3>
+                    </div>
+
+                    <span class="modern-order-status status-finished">
+                        Paga
+                    </span>
+                </div>
+
+                <div class="modern-order-info">
+
+                    <div>
+                        <span>Data</span>
+                        <strong th:text="${item.fatura.data}">2026-05-17</strong>
+                    </div>
+
+                    <div>
+                        <span>Valor</span>
+                        <strong th:text="${#numbers.formatDecimal(item.fatura.valor, 1, 'POINT', 2, 'COMMA') + ' €'}">
+                            0,00 €
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Estado</span>
+                        <strong>Emitida</strong>
+                    </div>
+
+                </div>
+
+                <div class="order-section"
+                     th:if="${item.fatura.observacoes != null and !#strings.isEmpty(item.fatura.observacoes)}">
+                    <h4>Observações</h4>
+                    <p class="order-notes" th:text="${item.fatura.observacoes}">
+                        Observações da fatura
+                    </p>
+                </div>
+
+                <div class="modern-order-footer">
+                    <span>Documento disponível</span>
+
+                    <a class="details-button"
+                       th:href="@{/encomendas/{id}(id=${item.encomenda.num})}">
+                        Ver encomenda
+                    </a>
+                </div>
+
+            </article>
+
+        </section>
+
     </main>
 
 </div>

@@ -39,12 +39,19 @@ public class DesignEncomendaService {
         this.encomendaRepository = encomendaRepository;
     }
 
+    public DesignEncomenda procurarUltimoPorEncomenda(BigDecimal idEncomenda) {
+        return designEncomendaRepository
+                .findTopByIdEncomendaOrderByDataCriacaoDesc(idEncomenda)
+                .orElse(null);
+    }
+
     @Transactional
     public DesignEncomenda criarComImagens(
             BigDecimal idEncomenda,
             String descricaoDesigner,
             List<MultipartFile> imagens
     ) {
+
         Encomenda encomenda = encomendaRepository.findById(idEncomenda.longValue())
                 .orElseThrow(() -> new IllegalArgumentException("Encomenda não encontrada."));
 
@@ -56,14 +63,35 @@ public class DesignEncomendaService {
             throw new IllegalArgumentException("Adiciona pelo menos uma imagem da proposta.");
         }
 
-        DesignEncomenda design = new DesignEncomenda();
-        design.setIdEncomenda(idEncomenda);
-        design.setDescricaoDesigner(descricaoDesigner);
-        design.setFicheiroDesign(null);
-        design.setEstadoDesign("ENVIADO_CLIENTE");
-        design.setDataCriacao(LocalDateTime.now());
+        DesignEncomenda designExistente =
+                procurarUltimoPorEncomenda(idEncomenda);
 
-        DesignEncomenda designGuardado = designEncomendaRepository.save(design);
+        DesignEncomenda design;
+
+        if (designExistente != null &&
+                "REJEITADO_CLIENTE".equalsIgnoreCase(designExistente.getEstadoDesign())) {
+
+            design = designExistente;
+
+            design.setDescricaoDesigner(descricaoDesigner);
+            design.setEstadoDesign("ENVIADO_CLIENTE");
+            design.setDataCriacao(LocalDateTime.now());
+
+            designEncomendaImagemRepository.deleteByIdDesignEncomenda(design.getId());
+
+        } else {
+
+            design = new DesignEncomenda();
+
+            design.setIdEncomenda(idEncomenda);
+            design.setDescricaoDesigner(descricaoDesigner);
+            design.setFicheiroDesign(null);
+            design.setEstadoDesign("ENVIADO_CLIENTE");
+            design.setDataCriacao(LocalDateTime.now());
+        }
+
+        DesignEncomenda designGuardado =
+                designEncomendaRepository.save(design);
 
         guardarImagens(designGuardado.getId(), imagens);
 
