@@ -2,18 +2,14 @@ package com.teuprojeto.desktop.view.rececionista;
 
 import com.teuprojeto.desktop.dto.ClienteDto;
 import com.teuprojeto.desktop.service.ClienteApiService;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RececionistaClientesListPage {
@@ -26,98 +22,78 @@ public class RececionistaClientesListPage {
     }
 
     public Parent getView() {
-        VBox root = RececionistaUiFactory.createPageContainer("Clientes");
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
 
-        HBox actions = new HBox(10);
+        VBox header = new VBox(6);
+
+        Label title = new Label("Clientes");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Consulte, pesquise e crie clientes da fábrica.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
+
+        HBox topBar = new HBox(14);
+        topBar.setAlignment(Pos.CENTER_LEFT);
 
         TextField search = new TextField();
         search.setPromptText("Pesquisar cliente...");
-        HBox.setHgrow(search, Priority.ALWAYS);
+        search.setPrefWidth(380);
+        search.setStyle(
+                "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-border-color: #dbe2ea;" +
+                        "-fx-padding: 12;" +
+                        "-fx-background-color: white;"
+        );
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button novo = RececionistaUiFactory.primaryButton("Novo Cliente");
         novo.setOnAction(e -> shell.navigateTo(RececionistaPage.CLIENTES_CRIAR));
 
-        Button atualizar = RececionistaUiFactory.secondaryButton("Atualizar");
+        Button atualizar = outlineButton("Atualizar");
 
-        actions.getChildren().addAll(search, novo, atualizar);
+        topBar.getChildren().addAll(search, spacer, novo, atualizar);
 
         Label statusLabel = new Label("A carregar clientes...");
-        statusLabel.setStyle("-fx-text-fill: #666666;");
+        statusLabel.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
 
-        TableView<ClienteRow> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        VBox lista = new VBox(16);
 
-        TableColumn<ClienteRow, String> nome = new TableColumn<>("Nome");
-        nome.setCellValueFactory(c -> c.getValue().nomeProperty());
+        List<ClienteRow> cache = new ArrayList<>();
 
-        TableColumn<ClienteRow, String> email = new TableColumn<>("Email");
-        email.setCellValueFactory(c -> c.getValue().emailProperty());
+        search.textProperty().addListener((obs, oldValue, newValue) ->
+                atualizarLista(lista, cache, newValue)
+        );
 
-        TableColumn<ClienteRow, String> telefone = new TableColumn<>("Telefone");
-        telefone.setCellValueFactory(c -> c.getValue().telefoneProperty());
+        root.getChildren().addAll(header, topBar, statusLabel, lista);
 
-        TableColumn<ClienteRow, String> tipo = new TableColumn<>("Tipo");
-        tipo.setCellValueFactory(c -> c.getValue().tipoProperty());
+        Runnable carregar = () -> carregarClientes(cache, lista, statusLabel, search.getText());
 
-        TableColumn<ClienteRow, Void> acao = new TableColumn<>("Ações");
-        acao.setCellFactory(col -> new TableCell<>() {
-            private final Button verBtn = new Button("Ver");
-            private final HBox box = new HBox(verBtn);
+        atualizar.setOnAction(e -> carregar.run());
+        carregar.run();
 
-            {
-                box.setAlignment(Pos.CENTER);
-                verBtn.setStyle("-fx-background-color: white; -fx-border-color: #cfcfcf; -fx-background-radius: 6; -fx-border-radius: 6;");
-                verBtn.setOnAction(e -> {
-                    ClienteRow cliente = getTableView().getItems().get(getIndex());
-                    shell.setClienteSelecionado(cliente);
-                    shell.navigateTo(RececionistaPage.CLIENTES_VER);
-                });
-            }
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
 
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : box);
-            }
-        });
-
-        table.getColumns().addAll(nome, email, telefone, tipo, acao);
-
-        ObservableList<ClienteRow> masterData = FXCollections.observableArrayList();
-        FilteredList<ClienteRow> filtrados = new FilteredList<>(masterData, cliente -> true);
-
-        search.textProperty().addListener((obs, oldValue, newValue) -> {
-            String termo = newValue == null ? "" : newValue.trim().toLowerCase();
-
-            filtrados.setPredicate(cliente -> {
-                if (termo.isBlank()) {
-                    return true;
-                }
-
-                return cliente.getNome().toLowerCase().contains(termo)
-                        || cliente.getEmail().toLowerCase().contains(termo)
-                        || cliente.getTelefone().toLowerCase().contains(termo)
-                        || cliente.getTipo().toLowerCase().contains(termo);
-            });
-        });
-
-        SortedList<ClienteRow> ordenados = new SortedList<>(filtrados);
-        ordenados.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(ordenados);
-
-        atualizar.setOnAction(e -> carregarClientes(masterData, statusLabel, table));
-        carregarClientes(masterData, statusLabel, table);
-
-        VBox card = RececionistaUiFactory.createCard();
-        card.getChildren().addAll(actions, statusLabel, table);
-
-        root.getChildren().add(card);
-        return root;
+        return scrollPane;
     }
 
-    private void carregarClientes(ObservableList<ClienteRow> masterData, Label statusLabel, TableView<ClienteRow> table) {
+    private void carregarClientes(
+            List<ClienteRow> cache,
+            VBox lista,
+            Label statusLabel,
+            String termo
+    ) {
         statusLabel.setText("A carregar clientes...");
-        table.setDisable(true);
 
         Task<List<ClienteDto>> task = new Task<>() {
             @Override
@@ -127,19 +103,20 @@ public class RececionistaClientesListPage {
         };
 
         task.setOnSucceeded(event -> {
-            masterData.setAll(
+            cache.clear();
+
+            cache.addAll(
                     task.getValue().stream()
                             .map(this::toRow)
                             .toList()
             );
 
-            statusLabel.setText("Clientes carregados: " + masterData.size());
-            table.setDisable(false);
+            atualizarLista(lista, cache, termo);
+            statusLabel.setText("Clientes carregados: " + cache.size());
         });
 
         task.setOnFailed(event -> {
             statusLabel.setText("Erro ao carregar clientes.");
-            table.setDisable(false);
 
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Erro ao obter clientes");
@@ -160,5 +137,176 @@ public class RececionistaClientesListPage {
                 dto.getTelefone(),
                 dto.getTipo()
         );
+    }
+
+    private void atualizarLista(
+            VBox lista,
+            List<ClienteRow> clientes,
+            String termo
+    ) {
+        lista.getChildren().clear();
+
+        List<ClienteRow> filtrados = clientes.stream()
+                .filter(c -> matches(termo, c))
+                .toList();
+
+        if (filtrados.isEmpty()) {
+            lista.getChildren().add(emptyCard("Nenhum cliente encontrado."));
+            return;
+        }
+
+        for (ClienteRow cliente : filtrados) {
+            lista.getChildren().add(buildCard(cliente));
+        }
+    }
+
+    private boolean matches(String termo, ClienteRow cliente) {
+        if (termo == null || termo.isBlank()) {
+            return true;
+        }
+
+        String t = termo.toLowerCase().trim();
+
+        return texto(cliente.getNome()).contains(t)
+                || texto(cliente.getEmail()).contains(t)
+                || texto(cliente.getTelefone()).contains(t)
+                || texto(cliente.getTipo()).contains(t);
+    }
+
+    private String texto(String value) {
+        return value == null ? "" : value.toLowerCase();
+    }
+
+    private VBox buildCard(ClienteRow cliente) {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+
+        HBox top = new HBox(14);
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane avatar = new StackPane();
+        avatar.setMinSize(58, 58);
+        avatar.setPrefSize(58, 58);
+        avatar.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label avatarText = new Label(obterIniciais(cliente.getNome()));
+        avatarText.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #2563eb;");
+        avatar.getChildren().add(avatarText);
+
+        VBox left = new VBox(4);
+
+        Label nome = new Label(valor(cliente.getNome()));
+        nome.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label email = new Label(valor(cliente.getEmail()));
+        email.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
+
+        left.getChildren().addAll(nome, email);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label tipo = badge(valor(cliente.getTipo()), "#dbeafe", "#1d4ed8");
+
+        Button ver = RececionistaUiFactory.primaryButton("Ver Cliente");
+        ver.setOnAction(e -> {
+            shell.setClienteSelecionado(cliente);
+            shell.navigateTo(RececionistaPage.CLIENTES_VER);
+        });
+
+        top.getChildren().addAll(avatar, left, spacer, tipo, ver);
+
+        HBox infoGrid = new HBox(26);
+        infoGrid.getChildren().addAll(
+                infoBlock("Telefone", valor(cliente.getTelefone())),
+                infoBlock("Código", cliente.getCod() == null ? "-" : String.valueOf(cliente.getCod())),
+                infoBlock("Tipo de cliente", valor(cliente.getTipo()))
+        );
+
+        card.getChildren().addAll(top, infoGrid);
+
+        return card;
+    }
+
+    private String obterIniciais(String nome) {
+        if (nome == null || nome.isBlank()) {
+            return "CL";
+        }
+
+        String[] partes = nome.trim().split("\\s+");
+
+        if (partes.length == 1) {
+            return partes[0].substring(0, 1).toUpperCase();
+        }
+
+        return (partes[0].substring(0, 1) + partes[1].substring(0, 1)).toUpperCase();
+    }
+
+    private VBox infoBlock(String title, String value) {
+        VBox box = new VBox(4);
+
+        Label t = new Label(title);
+        t.setStyle("-fx-font-size: 12; -fx-text-fill: #64748b;");
+
+        Label v = new Label(value == null ? "-" : value);
+        v.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        box.getChildren().addAll(t, v);
+        return box;
+    }
+
+    private Label badge(String text, String bg, String fg) {
+        Label label = new Label(text);
+        label.setStyle(
+                "-fx-background-color: " + bg + ";" +
+                        "-fx-text-fill: " + fg + ";" +
+                        "-fx-padding: 7 12 7 12;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-font-size: 12;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        return label;
+    }
+
+    private VBox emptyCard(String text) {
+        VBox box = new VBox();
+        box.setPadding(new Insets(22));
+        box.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
+
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
+
+        box.getChildren().add(label);
+        return box;
+    }
+
+    private Button outlineButton(String text) {
+        Button button = new Button(text);
+        button.setPrefHeight(42);
+        button.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: #dbe2ea;" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #0f172a;" +
+                        "-fx-padding: 0 18 0 18;" +
+                        "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    private String valor(String value) {
+        return value == null || value.isBlank() ? "-" : value;
     }
 }

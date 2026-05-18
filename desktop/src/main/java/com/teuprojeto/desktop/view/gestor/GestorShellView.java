@@ -31,10 +31,17 @@ public class GestorShellView {
 
     public Parent getView() {
         root.setLeft(buildSidebar());
-        root.setTop(buildTopbar());
-        root.setCenter(contentArea);
 
-        contentArea.setStyle("-fx-background-color: #efefef;");
+        VBox mainArea = new VBox();
+        mainArea.setStyle("-fx-background-color: #f4f7fb;");
+
+        contentArea.setStyle("-fx-background-color: #f4f7fb;");
+        VBox.setVgrow(contentArea, Priority.ALWAYS);
+
+        mainArea.getChildren().addAll(buildTopbar(), contentArea);
+
+        root.setCenter(mainArea);
+
         setPage(GestorPage.DASHBOARD);
 
         return root;
@@ -42,23 +49,29 @@ public class GestorShellView {
 
     private VBox buildSidebar() {
         VBox sidebar = new VBox();
-        sidebar.setPrefWidth(230);
-        sidebar.setStyle("-fx-background-color: linear-gradient(to bottom, #14245c, #1d38b8);");
+        sidebar.setPrefWidth(260);
+        sidebar.setMinWidth(260);
+        sidebar.setMaxWidth(260);
+        sidebar.setStyle("-fx-background-color: linear-gradient(to bottom, #07152f, #0b2a66);");
 
-        VBox brandBox = new VBox(6);
-        brandBox.setPadding(new Insets(28, 24, 28, 24));
-        brandBox.setStyle("-fx-border-color: rgba(255,255,255,0.10); -fx-border-width: 0 0 1 0;");
+        VBox brandBox = new VBox(8);
+        brandBox.setPadding(new Insets(34, 26, 34, 26));
 
-        Label brand = new Label("Fábrica de chapéus");
+        Label brand = new Label("FÁBRICA\nDE CHAPÉUS");
         brand.setStyle("-fx-text-fill: white; -fx-font-size: 22; -fx-font-weight: bold;");
 
         Label subtitle = new Label("Sistema de Gestão");
-        subtitle.setStyle("-fx-text-fill: #d7defa; -fx-font-size: 13;");
+        subtitle.setStyle("-fx-text-fill: #93c5fd; -fx-font-size: 13; -fx-font-weight: bold;");
 
         brandBox.getChildren().addAll(brand, subtitle);
 
-        VBox menuBox = new VBox(14);
-        menuBox.setPadding(new Insets(28, 18, 18, 18));
+        VBox menuBox = new VBox(12);
+        menuBox.setPadding(new Insets(18));
+
+        Label menuLabel = new Label("GESTOR");
+        menuLabel.setStyle("-fx-text-fill: #bfdbfe; -fx-font-size: 11; -fx-font-weight: bold; -fx-padding: 0 0 8 10;");
+
+        menuBox.getChildren().add(menuLabel);
 
         addMenuButton(menuBox, "Dashboard", GestorPage.DASHBOARD);
         addMenuButton(menuBox, "Stock", GestorPage.STOCK);
@@ -70,14 +83,13 @@ public class GestorShellView {
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        Button logoutBtn = new Button("Logout");
-        logoutBtn.setMaxWidth(Double.MAX_VALUE);
-        logoutBtn.setPrefHeight(42);
-        logoutBtn.setStyle(buttonStyle(false));
+        VBox userBox = userBox("Gestor", "Stock e Finanças");
+
+        Button logoutBtn = logoutButton();
         logoutBtn.setOnAction(e -> app.showLogin());
 
-        VBox bottomBox = new VBox(logoutBtn);
-        bottomBox.setPadding(new Insets(12, 18, 22, 18));
+        VBox bottomBox = new VBox(14, userBox, logoutBtn);
+        bottomBox.setPadding(new Insets(12, 18, 26, 18));
 
         sidebar.getChildren().addAll(brandBox, menuBox, spacer, bottomBox);
         return sidebar;
@@ -95,7 +107,7 @@ public class GestorShellView {
     private void addMenuButton(VBox parent, String text, GestorPage page) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPrefHeight(44);
+        btn.setPrefHeight(52);
         btn.setStyle(buttonStyle(false));
         btn.setOnAction(e -> setPage(page));
 
@@ -135,19 +147,46 @@ public class GestorShellView {
         this.materialSelecionado = materialSelecionado;
     }
 
+    private VBox userBox(String roleText, String areaText) {
+        VBox box = new VBox(6);
+        box.setPadding(new Insets(16));
+        box.setStyle("-fx-background-color: rgba(255,255,255,0.10); -fx-background-radius: 18; -fx-border-color: rgba(255,255,255,0.18); -fx-border-radius: 18;");
+
+        Label role = new Label(roleText);
+        role.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;");
+
+        Label area = new Label(areaText);
+        area.setStyle("-fx-text-fill: #bfdbfe; -fx-font-size: 12;");
+
+        box.getChildren().addAll(role, area);
+        return box;
+    }
+
+    private Button logoutButton() {
+        Button btn = new Button("Logout");
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setPrefHeight(46);
+        btn.setStyle("-fx-background-color: transparent; -fx-border-color: rgba(248,113,113,0.75); -fx-border-width: 1.5; -fx-text-fill: #fecaca; -fx-font-weight: bold; -fx-background-radius: 14; -fx-border-radius: 14; -fx-cursor: hand;");
+        return btn;
+    }
+
     private String buttonStyle(boolean active) {
         if (active) {
-            return "-fx-background-color: white; " +
-                    "-fx-text-fill: #16235c; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-background-radius: 12; " +
-                    "-fx-cursor: hand;";
+            return "-fx-background-color: linear-gradient(to right, #2563eb, #1d4ed8);" +
+                    "-fx-text-fill: white;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-background-radius: 16;" +
+                    "-fx-cursor: hand;" +
+                    "-fx-alignment: center-left;" +
+                    "-fx-padding: 0 0 0 18;";
         }
 
-        return "-fx-background-color: rgba(255,255,255,0.12); " +
-                "-fx-text-fill: white; " +
-                "-fx-font-weight: bold; " +
-                "-fx-background-radius: 12; " +
-                "-fx-cursor: hand;";
+        return "-fx-background-color: transparent;" +
+                "-fx-text-fill: #e5e7eb;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 16;" +
+                "-fx-cursor: hand;" +
+                "-fx-alignment: center-left;" +
+                "-fx-padding: 0 0 0 18;";
     }
 }

@@ -2,18 +2,14 @@ package com.teuprojeto.desktop.view.gestor;
 
 import com.teuprojeto.desktop.dto.MaterialDto;
 import com.teuprojeto.desktop.service.MaterialApiService;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GestorStockPage {
@@ -26,132 +22,66 @@ public class GestorStockPage {
     }
 
     public Parent getView() {
-        VBox root = GestorUiFactory.createPageContainer("Consultar Stock");
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
 
-        HBox actions = new HBox(10);
+        VBox header = new VBox(6);
+
+        Label title = new Label("Consultar Stock");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Consulte materiais, stock atual e materiais abaixo do mínimo.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
+
+        HBox topBar = new HBox(14);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+
         TextField search = new TextField();
         search.setPromptText("Pesquisar material...");
-        HBox.setHgrow(search, Priority.ALWAYS);
+        search.setPrefWidth(380);
+        search.setStyle(inputStyle());
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button novoMaterial = GestorUiFactory.primaryButton("Novo Material");
         novoMaterial.setOnAction(e -> shell.navigateTo(GestorPage.NOVO_MATERIAL));
 
-        Button atualizar = GestorUiFactory.secondaryButton("Atualizar");
-        actions.getChildren().addAll(search, novoMaterial, atualizar);
+        Button atualizar = outlineButton("Atualizar");
+
+        topBar.getChildren().addAll(search, spacer, novoMaterial, atualizar);
 
         Label status = new Label("A carregar materiais...");
-        status.setStyle("-fx-text-fill: #666666;");
+        status.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
 
-        TableView<MaterialRow> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        VBox lista = new VBox(16);
 
-        TableColumn<MaterialRow, String> nome = new TableColumn<>("Material");
-        nome.setCellValueFactory(c -> c.getValue().nomeProperty());
+        List<MaterialRow> cache = new ArrayList<>();
 
-        TableColumn<MaterialRow, Number> stockAtual = new TableColumn<>("Stock Atual");
-        stockAtual.setCellValueFactory(c -> c.getValue().stockAtualProperty());
+        search.textProperty().addListener((obs, oldValue, newValue) ->
+                atualizarLista(lista, cache, newValue)
+        );
 
-        TableColumn<MaterialRow, Number> stockMinimo = new TableColumn<>("Stock Mínimo");
-        stockMinimo.setCellValueFactory(c -> c.getValue().stockMinimoProperty());
+        root.getChildren().addAll(header, topBar, status, lista);
 
-        TableColumn<MaterialRow, String> unidade = new TableColumn<>("Unidade");
-        unidade.setCellValueFactory(c -> c.getValue().unidadeProperty());
+        Runnable carregar = () -> carregarMateriais(cache, lista, status, search.getText());
 
-        TableColumn<MaterialRow, Number> custo = new TableColumn<>("Custo Unitário");
-        custo.setCellValueFactory(c -> c.getValue().custoUnitarioProperty());
-        custo.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(Number item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : String.format("%.2f €", item.doubleValue()));
-            }
-        });
+        atualizar.setOnAction(e -> carregar.run());
+        carregar.run();
 
-        TableColumn<MaterialRow, String> estado = new TableColumn<>("Estado");
-        estado.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
-                c.getValue().getStockAtual() <= c.getValue().getStockMinimo() ? "Baixo" : "Alto"
-        ));
-        estado.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String value, boolean empty) {
-                super.updateItem(value, empty);
-                if (empty || value == null) {
-                    setGraphic(null);
-                    return;
-                }
-
-                Label label = new Label(value);
-                label.setStyle(
-                        "Baixo".equals(value)
-                                ? "-fx-background-color: #ff3b30; -fx-text-fill: white; -fx-padding: 4 10 4 10; -fx-background-radius: 12;"
-                                : "-fx-background-color: #16a34a; -fx-text-fill: white; -fx-padding: 4 10 4 10; -fx-background-radius: 12;"
-                );
-
-                HBox box = new HBox(label);
-                box.setAlignment(Pos.CENTER);
-                setGraphic(box);
-            }
-        });
-
-        TableColumn<MaterialRow, Void> acao = new TableColumn<>("Ações");
-        acao.setCellFactory(col -> new TableCell<>() {
-            private final Button editarBtn = new Button("Editar");
-            private final HBox box = new HBox(editarBtn);
-
-            {
-                box.setAlignment(Pos.CENTER);
-                editarBtn.setStyle("-fx-background-color: white; -fx-border-color: #cfcfcf; -fx-background-radius: 6; -fx-border-radius: 6;");
-                editarBtn.setOnAction(e -> {
-                    MaterialRow material = getTableView().getItems().get(getIndex());
-                    shell.setMaterialSelecionado(material);
-                    shell.navigateTo(GestorPage.EDITAR_MATERIAL);
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : box);
-            }
-        });
-
-        table.getColumns().addAll(nome, stockAtual, stockMinimo, unidade, custo, estado, acao);
-
-        ObservableList<MaterialRow> masterData = FXCollections.observableArrayList();
-        FilteredList<MaterialRow> filtrados = new FilteredList<>(masterData, material -> true);
-
-        search.textProperty().addListener((obs, oldValue, newValue) -> {
-            String termo = newValue == null ? "" : newValue.trim().toLowerCase();
-
-            filtrados.setPredicate(material -> {
-                if (termo.isBlank()) {
-                    return true;
-                }
-
-                return material.getNome().toLowerCase().contains(termo)
-                        || material.getUnidade().toLowerCase().contains(termo)
-                        || String.valueOf(material.getStockAtual()).contains(termo)
-                        || String.valueOf(material.getStockMinimo()).contains(termo);
-            });
-        });
-
-        SortedList<MaterialRow> ordenados = new SortedList<>(filtrados);
-        ordenados.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(ordenados);
-
-        atualizar.setOnAction(e -> carregarMateriais(masterData, status, table));
-        carregarMateriais(masterData, status, table);
-
-        VBox card = GestorUiFactory.createCard();
-        card.getChildren().addAll(actions, status, table);
-
-        root.getChildren().add(card);
-        return root;
+        return wrap(root);
     }
 
-    private void carregarMateriais(ObservableList<MaterialRow> masterData, Label status, TableView<MaterialRow> table) {
+    private void carregarMateriais(
+            List<MaterialRow> cache,
+            VBox lista,
+            Label status,
+            String termo
+    ) {
         status.setText("A carregar materiais...");
-        table.setDisable(true);
 
         Task<List<MaterialRow>> task = new Task<>() {
             @Override
@@ -174,14 +104,15 @@ public class GestorStockPage {
         };
 
         task.setOnSucceeded(event -> {
-            masterData.setAll(task.getValue());
-            status.setText("Materiais carregados: " + masterData.size());
-            table.setDisable(false);
+            cache.clear();
+            cache.addAll(task.getValue());
+
+            atualizarLista(lista, cache, termo);
+            status.setText("Materiais carregados: " + cache.size());
         });
 
         task.setOnFailed(event -> {
             status.setText("Erro ao carregar materiais.");
-            table.setDisable(false);
 
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Erro");
@@ -192,5 +123,199 @@ public class GestorStockPage {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void atualizarLista(
+            VBox lista,
+            List<MaterialRow> materiais,
+            String termo
+    ) {
+        lista.getChildren().clear();
+
+        List<MaterialRow> filtrados = materiais.stream()
+                .filter(m -> matches(termo, m))
+                .toList();
+
+        if (filtrados.isEmpty()) {
+            lista.getChildren().add(emptyCard("Nenhum material encontrado."));
+            return;
+        }
+
+        for (MaterialRow material : filtrados) {
+            lista.getChildren().add(buildCard(material));
+        }
+    }
+
+    private boolean matches(String termo, MaterialRow material) {
+        if (termo == null || termo.isBlank()) {
+            return true;
+        }
+
+        String t = termo.toLowerCase().trim();
+
+        return texto(material.getNome()).contains(t)
+                || texto(material.getUnidade()).contains(t)
+                || String.valueOf(material.getStockAtual()).contains(t)
+                || String.valueOf(material.getStockMinimo()).contains(t)
+                || String.valueOf(material.getCustoUnitario()).contains(t);
+    }
+
+    private VBox buildCard(MaterialRow material) {
+        VBox card = card();
+
+        HBox top = new HBox(14);
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconText = new Label("📦");
+        iconText.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconText);
+
+        VBox left = new VBox(4);
+
+        Label nome = new Label(valor(material.getNome()));
+        nome.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label unidade = new Label("Unidade: " + valor(material.getUnidade()));
+        unidade.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
+
+        left.getChildren().addAll(nome, unidade);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        boolean stockBaixo = material.getStockAtual() <= material.getStockMinimo();
+
+        Label estado = badge(
+                stockBaixo ? "Stock baixo" : "Stock OK",
+                stockBaixo ? "#fee2e2" : "#dcfce7",
+                stockBaixo ? "#dc2626" : "#15803d"
+        );
+
+        Button editar = GestorUiFactory.primaryButton("Editar Stock");
+        editar.setOnAction(e -> {
+            shell.setMaterialSelecionado(material);
+            shell.navigateTo(GestorPage.EDITAR_MATERIAL);
+        });
+
+        top.getChildren().addAll(icon, left, spacer, estado, editar);
+
+        HBox infoGrid = new HBox(26);
+        infoGrid.getChildren().addAll(
+                infoBlock("Stock atual", formatarNumero(material.getStockAtual())),
+                infoBlock("Stock mínimo", formatarNumero(material.getStockMinimo())),
+                infoBlock("Unidade", valor(material.getUnidade())),
+                infoBlock("Custo unitário", formatarMoeda(material.getCustoUnitario()))
+        );
+
+        card.getChildren().addAll(top, infoGrid);
+
+        return card;
+    }
+
+    private VBox card() {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+        return card;
+    }
+
+    private VBox infoBlock(String title, String value) {
+        VBox box = new VBox(4);
+
+        Label t = new Label(title);
+        t.setStyle("-fx-font-size: 12; -fx-text-fill: #64748b;");
+
+        Label v = new Label(value == null ? "-" : value);
+        v.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        box.getChildren().addAll(t, v);
+        return box;
+    }
+
+    private Label badge(String text, String bg, String fg) {
+        Label label = new Label(text);
+        label.setStyle(
+                "-fx-background-color: " + bg + ";" +
+                        "-fx-text-fill: " + fg + ";" +
+                        "-fx-padding: 7 12 7 12;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-font-size: 12;" +
+                        "-fx-font-weight: bold;"
+        );
+        return label;
+    }
+
+    private VBox emptyCard(String text) {
+        VBox box = new VBox();
+        box.setPadding(new Insets(22));
+        box.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
+
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
+
+        box.getChildren().add(label);
+        return box;
+    }
+
+    private Button outlineButton(String text) {
+        Button button = new Button(text);
+        button.setPrefHeight(42);
+        button.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: #dbe2ea;" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #0f172a;" +
+                        "-fx-padding: 0 18 0 18;" +
+                        "-fx-cursor: hand;"
+        );
+        return button;
+    }
+
+    private String inputStyle() {
+        return "-fx-background-color: white;" +
+                "-fx-border-color: #dbe2ea;" +
+                "-fx-border-radius: 14;" +
+                "-fx-background-radius: 14;" +
+                "-fx-padding: 11;" +
+                "-fx-font-size: 14;";
+    }
+
+    private Parent wrap(VBox root) {
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
+        return scrollPane;
+    }
+
+    private String texto(String value) {
+        return value == null ? "" : value.toLowerCase();
+    }
+
+    private String valor(String value) {
+        return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private String formatarNumero(double valor) {
+        return String.format("%.2f", valor).replace(".", ",");
+    }
+
+    private String formatarMoeda(double valor) {
+        return String.format("%.2f €", valor).replace(".", ",");
     }
 }

@@ -5,11 +5,10 @@ import com.teuprojeto.desktop.dto.CriarClienteRequestDto;
 import com.teuprojeto.desktop.service.ClienteApiService;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
 public class RececionistaCriarClientePage {
 
@@ -21,57 +20,90 @@ public class RececionistaCriarClientePage {
     }
 
     public Parent getView() {
-        VBox root = RececionistaUiFactory.createPageContainer("Criar Cliente");
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
+
+        VBox header = new VBox(6);
+
+        Label title = new Label("Criar Cliente");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Registe um novo cliente na base de dados da fábrica.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
+
+        VBox card = card();
+
+        HBox cardHeader = new HBox(14);
+        cardHeader.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconText = new Label("👤");
+        iconText.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconText);
+
+        VBox cardTitleBox = new VBox(4);
+
+        Label cardTitle = new Label("Dados do Cliente");
+        cardTitle.setStyle("-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label cardSub = new Label("Preencha os dados principais e a morada do cliente.");
+        cardSub.setStyle("-fx-font-size: 13; -fx-text-fill: #64748b;");
+
+        cardTitleBox.getChildren().addAll(cardTitle, cardSub);
+        cardHeader.getChildren().addAll(icon, cardTitleBox);
 
         GridPane form = new GridPane();
-        form.setHgap(16);
+        form.setHgap(18);
         form.setVgap(14);
-        form.setPadding(new Insets(10, 0, 0, 0));
 
-        TextField nome = new TextField();
-        TextField email = new TextField();
-        TextField telefone = new TextField();
-        TextField nif = new TextField();
+        TextField nome = input("Nome do cliente");
+        TextField email = input("Email");
+        TextField telefone = input("Telefone");
+        TextField nif = input("NIF");
 
         ComboBox<String> tipo = new ComboBox<>();
         tipo.getItems().addAll("Particular", "Empresa");
+        tipo.setPromptText("Selecionar tipo");
         tipo.setMaxWidth(Double.MAX_VALUE);
+        tipo.setStyle(inputStyle());
 
-        TextField rua = new TextField();
-        TextField porta = new TextField();
-        TextField codPostal = new TextField();
-        TextField cidade = new TextField();
+        TextField rua = input("Rua");
+        TextField porta = input("Porta");
+        TextField codPostal = input("Código postal");
+        TextField cidade = input("Cidade");
 
         TextArea observacoes = new TextArea();
+        observacoes.setPromptText("Observações adicionais...");
         observacoes.setPrefRowCount(4);
+        observacoes.setWrapText(true);
+        observacoes.setStyle(inputStyle());
 
-        form.add(new Label("Nome"), 0, 0);
-        form.add(nome, 0, 1);
-        form.add(new Label("Tipo"), 1, 0);
-        form.add(tipo, 1, 1);
+        addField(form, "Nome", nome, 0, 0);
+        addField(form, "Tipo", tipo, 1, 0);
 
-        form.add(new Label("Email"), 0, 2);
-        form.add(email, 0, 3);
-        form.add(new Label("Telefone"), 1, 2);
-        form.add(telefone, 1, 3);
+        addField(form, "Email", email, 0, 2);
+        addField(form, "Telefone", telefone, 1, 2);
 
-        form.add(new Label("NIF"), 0, 4);
-        form.add(nif, 0, 5);
-        form.add(new Label("Cidade"), 1, 4);
-        form.add(cidade, 1, 5);
+        addField(form, "NIF", nif, 0, 4);
+        addField(form, "Cidade", cidade, 1, 4);
 
-        form.add(new Label("Rua"), 0, 6);
-        form.add(rua, 0, 7);
-        form.add(new Label("Porta"), 1, 6);
-        form.add(porta, 1, 7);
+        addField(form, "Rua", rua, 0, 6);
+        addField(form, "Porta", porta, 1, 6);
 
-        form.add(new Label("Código Postal"), 0, 8);
-        form.add(codPostal, 0, 9);
+        addField(form, "Código Postal", codPostal, 0, 8);
 
-        form.add(new Label("Observações"), 0, 10);
+        Label obsLabel = fieldLabel("Observações");
+        form.add(obsLabel, 0, 10);
         form.add(observacoes, 0, 11, 2, 1);
 
-        Button guardar = RececionistaUiFactory.primaryButton("Guardar");
+        Button guardar = RececionistaUiFactory.primaryButton("Guardar Cliente");
         Button cancelar = RececionistaUiFactory.secondaryButton("Cancelar");
 
         cancelar.setOnAction(e -> shell.navigateTo(RececionistaPage.CLIENTES_LISTAR));
@@ -91,13 +123,19 @@ public class RececionistaCriarClientePage {
                 cancelar
         ));
 
-        HBox buttons = new HBox(10, guardar, cancelar);
+        HBox buttons = new HBox(12, guardar, cancelar);
+        buttons.setAlignment(Pos.CENTER_LEFT);
 
-        VBox card = RececionistaUiFactory.createCard();
-        card.getChildren().addAll(form, buttons);
+        card.getChildren().addAll(
+                cardHeader,
+                separator(),
+                form,
+                buttons
+        );
 
-        root.getChildren().add(card);
-        return root;
+        root.getChildren().addAll(header, card);
+
+        return wrap(root);
     }
 
     private void criarCliente(String nome,
@@ -162,6 +200,65 @@ public class RececionistaCriarClientePage {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void addField(GridPane form, String label, Control input, int col, int row) {
+        form.add(fieldLabel(label), col, row);
+        form.add(input, col, row + 1);
+
+        GridPane.setHgrow(input, Priority.ALWAYS);
+        input.setMaxWidth(Double.MAX_VALUE);
+    }
+
+    private TextField input(String prompt) {
+        TextField field = new TextField();
+        field.setPromptText(prompt);
+        field.setStyle(inputStyle());
+        return field;
+    }
+
+    private String inputStyle() {
+        return "-fx-background-color: white;" +
+                "-fx-border-color: #dbe2ea;" +
+                "-fx-border-radius: 14;" +
+                "-fx-background-radius: 14;" +
+                "-fx-padding: 11;" +
+                "-fx-font-size: 14;";
+    }
+
+    private Label fieldLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #334155;");
+        return label;
+    }
+
+    private VBox card() {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+        return card;
+    }
+
+    private Region separator() {
+        Region region = new Region();
+        region.setPrefHeight(1);
+        region.setStyle("-fx-background-color: #e5e7eb;");
+        return region;
+    }
+
+    private Parent wrap(VBox root) {
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
+        return scrollPane;
     }
 
     private boolean isBlank(String value) {

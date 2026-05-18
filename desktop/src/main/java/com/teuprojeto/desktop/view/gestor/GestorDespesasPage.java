@@ -7,12 +7,11 @@ import com.teuprojeto.desktop.service.MaterialApiService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,68 +29,70 @@ public class GestorDespesasPage {
     }
 
     public Parent getView() {
-        VBox root = GestorUiFactory.createPageContainer("Consultar Despesas");
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
 
-        HBox actions = new HBox(10);
+        VBox header = new VBox(6);
+
+        Label title = new Label("Consultar Despesas");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Consulte compras de material e despesas registadas.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
+
+        HBox topBar = new HBox(14);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button adicionar = GestorUiFactory.primaryButton("Adicionar Despesa");
         adicionar.setOnAction(e -> shell.navigateTo(GestorPage.NOVA_DESPESA));
-        actions.getChildren().addAll(spacer, adicionar);
+
+        topBar.getChildren().addAll(spacer, adicionar);
 
         Label estado = new Label("A carregar despesas...");
-        estado.setStyle("-fx-text-fill: #666666;");
+        estado.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
 
-        TableView<DespesaRow> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        Label totalValor = statNumber("0,00 €");
 
-        TableColumn<DespesaRow, String> codigo = new TableColumn<>("ID");
-        codigo.setCellValueFactory(c -> c.getValue().codigoProperty());
+        HBox stats = new HBox(18);
+        stats.getChildren().addAll(
+                statCard("Total Despesas", totalValor, "Compras de material", "#dc2626", "€")
+        );
 
-        TableColumn<DespesaRow, String> data = new TableColumn<>("Data");
-        data.setCellValueFactory(c -> c.getValue().dataProperty());
+        VBox listaCard = card();
+        VBox listaDespesas = new VBox(14);
 
-        TableColumn<DespesaRow, String> produto = new TableColumn<>("Material");
-        produto.setCellValueFactory(c -> c.getValue().produtoProperty());
+        listaCard.getChildren().addAll(
+                sectionHeader("🧾", "Despesas Registadas", "Últimas compras de material registadas no sistema."),
+                separator(),
+                listaDespesas
+        );
 
-        TableColumn<DespesaRow, String> quantidade = new TableColumn<>("Quantidade");
-        quantidade.setCellValueFactory(c -> c.getValue().quantidadeProperty());
+        root.getChildren().addAll(
+                header,
+                topBar,
+                estado,
+                stats,
+                listaCard
+        );
 
-        TableColumn<DespesaRow, String> descricao = new TableColumn<>("Observações");
-        descricao.setCellValueFactory(c -> c.getValue().descricaoProperty());
+        carregarDespesas(listaDespesas, estado, totalValor);
 
-        TableColumn<DespesaRow, String> valor = new TableColumn<>("Valor");
-        valor.setCellValueFactory(c -> c.getValue().valorProperty());
-
-        table.getColumns().addAll(codigo, data, produto, quantidade, descricao, valor);
-
-        ObservableList<DespesaRow> rows = FXCollections.observableArrayList();
-        table.setItems(rows);
-
-        VBox cardTabela = GestorUiFactory.createCard();
-        cardTabela.getChildren().addAll(actions, estado, table);
-
-        VBox totalCard = GestorUiFactory.createCard();
-        totalCard.setMaxWidth(220);
-
-        Label t1 = new Label("Total Despesas");
-        t1.setStyle("-fx-text-fill: #666;");
-
-        Label t2 = new Label("0.00 €");
-        t2.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #d11a2a;");
-
-        Label t3 = new Label("Compras de material");
-        totalCard.getChildren().addAll(t1, t2, t3);
-
-        root.getChildren().addAll(cardTabela, totalCard);
-
-        carregarDespesas(rows, estado, t2);
-
-        return root;
+        return wrap(root);
     }
 
-    private void carregarDespesas(ObservableList<DespesaRow> rows, Label estado, Label totalLabel) {
+    private void carregarDespesas(
+            VBox listaDespesas,
+            Label estado,
+            Label totalLabel
+    ) {
+        estado.setText("A carregar despesas...");
+
         Task<List<DespesaRow>> task = new Task<>() {
             private BigDecimal total = BigDecimal.ZERO;
 
@@ -102,14 +103,18 @@ public class GestorDespesasPage {
 
                 Map<Long, String> nomes = materiais.stream()
                         .filter(m -> m.getId() != null)
-                        .collect(Collectors.toMap(MaterialDto::getId, MaterialDto::getNome, (a, b) -> a));
+                        .collect(Collectors.toMap(
+                                MaterialDto::getId,
+                                MaterialDto::getNome,
+                                (a, b) -> a
+                        ));
 
                 total = compras.stream()
                         .map(CompraMaterialDto::getCustoTotal)
                         .filter(v -> v != null)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                updateMessage(String.format("%.2f €", total.doubleValue()));
+                updateMessage(formatarMoeda(total));
 
                 return compras.stream()
                         .sorted((a, b) -> Long.compare(b.getId(), a.getId()))
@@ -119,7 +124,7 @@ public class GestorDespesasPage {
                                 nomes.getOrDefault(compra.getIdMaterial(), "Material #" + compra.getIdMaterial()),
                                 compra.getQuantidade() == null ? "-" : compra.getQuantidade().toPlainString(),
                                 compra.getObservacoes() == null ? "-" : compra.getObservacoes(),
-                                compra.getCustoTotal() == null ? "0.00 €" : String.format("%.2f €", compra.getCustoTotal().doubleValue())
+                                compra.getCustoTotal() == null ? "0,00 €" : formatarMoeda(compra.getCustoTotal())
                         ))
                         .toList();
             }
@@ -128,7 +133,18 @@ public class GestorDespesasPage {
         totalLabel.textProperty().bind(task.messageProperty());
 
         task.setOnSucceeded(event -> {
-            rows.setAll(task.getValue());
+            ObservableList<DespesaRow> rows = FXCollections.observableArrayList(task.getValue());
+
+            listaDespesas.getChildren().clear();
+
+            if (rows.isEmpty()) {
+                listaDespesas.getChildren().add(emptyBox("Ainda não existem despesas registadas."));
+            } else {
+                for (DespesaRow row : rows) {
+                    listaDespesas.getChildren().add(despesaCard(row));
+                }
+            }
+
             estado.setText("Despesas carregadas: " + rows.size());
         });
 
@@ -144,5 +160,181 @@ public class GestorDespesasPage {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private HBox despesaCard(DespesaRow row) {
+        HBox card = new HBox(14);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setPadding(new Insets(14));
+        card.setStyle(
+                "-fx-background-color: #f8fafc;" +
+                        "-fx-background-radius: 18;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-border-radius: 18;"
+        );
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(52, 52);
+        icon.setPrefSize(52, 52);
+        icon.setStyle("-fx-background-color: #fee2e2; -fx-background-radius: 16;");
+
+        Label iconText = new Label("🧾");
+        iconText.setStyle("-fx-font-size: 22;");
+        icon.getChildren().add(iconText);
+
+        VBox main = new VBox(4);
+
+        Label codigo = new Label(row.codigoProperty().get());
+        codigo.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label material = new Label(row.produtoProperty().get());
+        material.setStyle("-fx-font-size: 13; -fx-text-fill: #2563eb; -fx-font-weight: bold;");
+
+        main.getChildren().addAll(codigo, material);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        card.getChildren().addAll(
+                icon,
+                main,
+                spacer,
+                infoBlock("Data", row.dataProperty().get()),
+                infoBlock("Quantidade", row.quantidadeProperty().get()),
+                infoBlock("Valor", row.valorProperty().get())
+        );
+
+        return card;
+    }
+
+    private VBox statCard(String title, Label value, String subtitle, String color, String iconText) {
+        VBox card = card();
+        card.setPrefWidth(320);
+        HBox.setHgrow(card, Priority.ALWAYS);
+
+        HBox box = new HBox(14);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(54, 54);
+        icon.setPrefSize(54, 54);
+        icon.setStyle(
+                "-fx-background-color: " + color + ";" +
+                        "-fx-background-radius: 16;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.18), 14, 0, 0, 5);"
+        );
+
+        Label iconLabel = new Label(iconText);
+        iconLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
+        icon.getChildren().add(iconLabel);
+
+        VBox text = new VBox(3);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-text-fill: #0f172a; -fx-font-size: 14; -fx-font-weight: bold;");
+
+        Label subtitleLabel = new Label(subtitle);
+        subtitleLabel.setStyle("-fx-text-fill: #64748b; -fx-font-size: 13;");
+
+        text.getChildren().addAll(titleLabel, value, subtitleLabel);
+        box.getChildren().addAll(icon, text);
+
+        card.getChildren().add(box);
+        return card;
+    }
+
+    private Label statNumber(String value) {
+        Label label = new Label(value);
+        label.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+        return label;
+    }
+
+    private HBox sectionHeader(String iconText, String title, String subtitle) {
+        HBox box = new HBox(14);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconLabel = new Label(iconText);
+        iconLabel.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconLabel);
+
+        VBox text = new VBox(4);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitleLabel = new Label(subtitle);
+        subtitleLabel.setStyle("-fx-font-size: 13; -fx-text-fill: #64748b;");
+
+        text.getChildren().addAll(titleLabel, subtitleLabel);
+        box.getChildren().addAll(icon, text);
+
+        return box;
+    }
+
+    private VBox card() {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+        return card;
+    }
+
+    private VBox infoBlock(String title, String value) {
+        VBox box = new VBox(4);
+
+        Label t = new Label(title);
+        t.setStyle("-fx-font-size: 12; -fx-text-fill: #64748b;");
+
+        Label v = new Label(value == null ? "-" : value);
+        v.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        box.getChildren().addAll(t, v);
+        return box;
+    }
+
+    private VBox emptyBox(String text) {
+        VBox box = new VBox();
+        box.setPadding(new Insets(18));
+        box.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 16;");
+
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
+
+        box.getChildren().add(label);
+        return box;
+    }
+
+    private Region separator() {
+        Region region = new Region();
+        region.setPrefHeight(1);
+        region.setStyle("-fx-background-color: #e5e7eb;");
+        return region;
+    }
+
+    private Parent wrap(VBox root) {
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
+        return scrollPane;
+    }
+
+    private String formatarMoeda(BigDecimal valor) {
+        if (valor == null) {
+            return "0,00 €";
+        }
+
+        return String.format("%.2f €", valor.doubleValue()).replace(".", ",");
     }
 }

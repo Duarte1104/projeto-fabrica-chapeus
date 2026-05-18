@@ -22,14 +22,26 @@ public class AppTopBar {
     ) {
         HBox root = new HBox();
         root.setAlignment(Pos.CENTER_RIGHT);
-        root.setPadding(new Insets(18, 24, 18, 24));
-        root.setMinHeight(72);
-        root.setPrefHeight(72);
+        root.setPadding(new Insets(18, 34, 18, 34));
+        root.setMinHeight(82);
+        root.setPrefHeight(82);
         root.setStyle(
-                "-fx-background-color: white;" +
-                        "-fx-border-color: #d8d8d8;" +
+                "-fx-background-color: #f4f7fb;" +
+                        "-fx-border-color: #e5e7eb;" +
                         "-fx-border-width: 0 0 1 0;"
         );
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        VBox titleBox = new VBox(2);
+        Label title = new Label("Painel de Gestão");
+        title.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Fábrica de Chapéus · " + roleLabel);
+        subtitle.setStyle("-fx-font-size: 13; -fx-text-fill: #64748b; -fx-font-weight: bold;");
+
+        titleBox.getChildren().addAll(title, subtitle);
 
         Button userChip = buildUserChip(user, roleLabel);
         ContextMenu menu = buildProfileMenu(onAlterarPass, onLogout);
@@ -42,7 +54,7 @@ public class AppTopBar {
             }
         });
 
-        root.getChildren().add(userChip);
+        root.getChildren().addAll(titleBox, spacer, userChip);
         return root;
     }
 
@@ -51,11 +63,11 @@ public class AppTopBar {
         String iniciais = obterIniciais(nome);
 
         StackPane avatar = new StackPane();
-        avatar.setMinSize(42, 42);
-        avatar.setPrefSize(42, 42);
-        avatar.setMaxSize(42, 42);
+        avatar.setMinSize(44, 44);
+        avatar.setPrefSize(44, 44);
+        avatar.setMaxSize(44, 44);
 
-        Circle circle = new Circle(21);
+        Circle circle = new Circle(22);
         circle.setFill(Color.web("#2563EB"));
 
         Label initialsLabel = new Label(iniciais);
@@ -69,36 +81,38 @@ public class AppTopBar {
 
         Label nameLabel = new Label(nome);
         nameLabel.setStyle(
-                "-fx-text-fill: #111111;" +
+                "-fx-text-fill: #0f172a;" +
                         "-fx-font-size: 13;" +
                         "-fx-font-weight: bold;"
         );
 
         Label role = new Label(roleLabel);
         role.setStyle(
-                "-fx-text-fill: #6B7280;" +
-                        "-fx-font-size: 11;"
+                "-fx-text-fill: #64748b;" +
+                        "-fx-font-size: 11;" +
+                        "-fx-font-weight: bold;"
         );
 
         VBox textBox = new VBox(1, nameLabel, role);
         textBox.setAlignment(Pos.CENTER_LEFT);
 
-        HBox content = new HBox(10, avatar, textBox);
+        HBox content = new HBox(12, avatar, textBox);
         content.setAlignment(Pos.CENTER_LEFT);
 
         Button chip = new Button();
         chip.setGraphic(content);
         chip.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        chip.setPrefHeight(48);
-        chip.setMinHeight(48);
+        chip.setPrefHeight(52);
+        chip.setMinHeight(52);
         chip.setStyle(
                 "-fx-background-color: white;" +
-                        "-fx-border-color: #cfcfcf;" +
+                        "-fx-border-color: #e2e8f0;" +
                         "-fx-border-width: 1.5;" +
-                        "-fx-border-radius: 14;" +
-                        "-fx-background-radius: 14;" +
-                        "-fx-padding: 4 12 4 10;" +
-                        "-fx-cursor: hand;"
+                        "-fx-border-radius: 18;" +
+                        "-fx-background-radius: 18;" +
+                        "-fx-padding: 4 14 4 10;" +
+                        "-fx-cursor: hand;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 12, 0, 0, 4);"
         );
 
         return chip;
@@ -110,15 +124,15 @@ public class AppTopBar {
         menu.setStyle(
                 "-fx-background-color: white;" +
                         "-fx-border-color: #E5E7EB;" +
-                        "-fx-background-radius: 14;" +
-                        "-fx-border-radius: 14;"
+                        "-fx-background-radius: 16;" +
+                        "-fx-border-radius: 16;"
         );
 
         Label title = new Label("Minha Conta");
         title.setStyle(
                 "-fx-font-size: 15;" +
                         "-fx-font-weight: bold;" +
-                        "-fx-text-fill: #111111;"
+                        "-fx-text-fill: #0f172a;"
         );
 
         VBox headerBox = new VBox(title);
@@ -127,7 +141,7 @@ public class AppTopBar {
         CustomMenuItem headerItem = new CustomMenuItem(headerBox, false);
         headerItem.setHideOnClick(false);
 
-        CustomMenuItem alterarPassItem = createMenuItem("Alterar pass", onAlterarPass);
+        CustomMenuItem alterarPassItem = createMenuItem("Alterar password", onAlterarPass);
         CustomMenuItem sairItem = createMenuItem("Sair", onLogout);
 
         menu.getItems().addAll(
@@ -145,13 +159,14 @@ public class AppTopBar {
         Label label = new Label(text);
         label.setStyle(
                 "-fx-font-size: 14;" +
-                        "-fx-text-fill: #111111;"
+                        "-fx-text-fill: #0f172a;" +
+                        "-fx-font-weight: bold;"
         );
 
         HBox row = new HBox(label);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(10, 14, 10, 14));
-        row.setMinWidth(180);
+        row.setPadding(new Insets(11, 15, 11, 15));
+        row.setMinWidth(190);
 
         CustomMenuItem item = new CustomMenuItem(row, true);
         item.setOnAction(e -> action.run());
@@ -173,6 +188,7 @@ public class AppTopBar {
             if (parte.isBlank()) {
                 continue;
             }
+
             nome.append(parte.substring(0, 1).toUpperCase())
                     .append(parte.substring(1).toLowerCase())
                     .append(" ");
@@ -188,6 +204,7 @@ public class AppTopBar {
         }
 
         String[] partes = nome.trim().split("\\s+");
+
         if (partes.length == 1) {
             return partes[0].substring(0, 1).toUpperCase();
         }

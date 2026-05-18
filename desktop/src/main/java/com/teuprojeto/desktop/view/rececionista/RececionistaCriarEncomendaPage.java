@@ -9,12 +9,10 @@ import com.teuprojeto.desktop.service.ClienteApiService;
 import com.teuprojeto.desktop.service.EncomendaApiService;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
@@ -34,13 +32,26 @@ public class RececionistaCriarEncomendaPage {
     }
 
     public Parent getView() {
-        VBox page = RececionistaUiFactory.createPageContainer("Criar Encomenda");
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
+
+        VBox header = new VBox(6);
+
+        Label title = new Label("Criar Encomenda");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Registe uma nova encomenda com uma ou várias linhas de chapéus.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
 
         Label estado = new Label("A carregar dados...");
-        estado.setStyle("-fx-text-fill: #666666;");
+        estado.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
 
         ComboBox<ClienteDto> clienteBox = new ComboBox<>();
         clienteBox.setMaxWidth(Double.MAX_VALUE);
+        clienteBox.setStyle(inputStyle());
         clienteBox.setConverter(new StringConverter<>() {
             @Override
             public String toString(ClienteDto value) {
@@ -57,13 +68,48 @@ public class RececionistaCriarEncomendaPage {
         });
 
         DatePicker entregaPicker = new DatePicker();
+        entregaPicker.setMaxWidth(Double.MAX_VALUE);
+        entregaPicker.setStyle(inputStyle());
 
-        CheckBox temDesignBox = new CheckBox("Precisa de design");
+        VBox dadosCard = card();
+
+        HBox dadosHeader = sectionHeader("📦", "Dados da Encomenda", "Cliente, data de entrega e estado inicial da encomenda.");
+
+        HBox linhaClienteEntrega = new HBox(18);
+        linhaClienteEntrega.getChildren().addAll(
+                criarCampoBox("Cliente", clienteBox),
+                criarCampoBox("Data de entrega", entregaPicker)
+        );
+
+        dadosCard.getChildren().addAll(
+                dadosHeader,
+                separator(),
+                linhaClienteEntrega
+        );
+
+        VBox linhasBox = new VBox(14);
+        adicionarLinha(linhasBox);
+
+        Button adicionarLinhaBtn = secondaryButton("+ Adicionar Linha");
+        adicionarLinhaBtn.setOnAction(e -> adicionarLinha(linhasBox));
+
+        VBox linhasCard = card();
+        linhasCard.getChildren().addAll(
+                sectionHeader("🎩", "Linhas da Encomenda", "Adicione os chapéus, tamanhos, cores e quantidades pretendidas."),
+                separator(),
+                linhasBox,
+                adicionarLinhaBtn
+        );
+
+        CheckBox temDesignBox = new CheckBox("Esta encomenda precisa de design personalizado");
+        temDesignBox.setStyle("-fx-font-weight: bold; -fx-text-fill: #0f172a;");
 
         TextArea descricaoDesign = new TextArea();
         descricaoDesign.setPromptText("Descreve o pedido do design...");
         descricaoDesign.setPrefRowCount(4);
+        descricaoDesign.setWrapText(true);
         descricaoDesign.setDisable(true);
+        descricaoDesign.setStyle(inputStyle());
 
         temDesignBox.selectedProperty().addListener((obs, oldValue, selected) -> {
             descricaoDesign.setDisable(!selected);
@@ -75,49 +121,23 @@ public class RececionistaCriarEncomendaPage {
         TextArea observacoes = new TextArea();
         observacoes.setPromptText("Observações da encomenda...");
         observacoes.setPrefRowCount(4);
+        observacoes.setWrapText(true);
+        observacoes.setStyle(inputStyle());
 
-        VBox linhasBox = new VBox(10);
-        adicionarLinha(linhasBox);
-
-        Button adicionarLinhaBtn = RececionistaUiFactory.secondaryButton("+ Adicionar Linha");
-        adicionarLinhaBtn.setOnAction(e -> adicionarLinha(linhasBox));
-
-        VBox dadosCard = RececionistaUiFactory.createCard();
-        Label dadosTitulo = new Label("Dados da Encomenda");
-        dadosTitulo.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-
-        HBox linhaClienteEntrega = new HBox(16,
-                criarCampoBox("Cliente", clienteBox),
-                criarCampoBox("Data de entrega", entregaPicker)
-        );
-        HBox.setHgrow(linhaClienteEntrega.getChildren().get(0), Priority.ALWAYS);
-        HBox.setHgrow(linhaClienteEntrega.getChildren().get(1), Priority.ALWAYS);
-
-        dadosCard.getChildren().addAll(
-                estado,
-                dadosTitulo,
-                linhaClienteEntrega
-        );
-
-        VBox linhasCard = RececionistaUiFactory.createCard();
-        Label linhasTitulo = new Label("Linhas da Encomenda");
-        linhasTitulo.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-        linhasCard.getChildren().addAll(linhasTitulo, linhasBox, adicionarLinhaBtn);
-
-        VBox designCard = RececionistaUiFactory.createCard();
-        Label designTitulo = new Label("Design e Observações");
-        designTitulo.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        VBox designCard = card();
         designCard.getChildren().addAll(
-                designTitulo,
+                sectionHeader("🎨", "Design e Observações", "Indique se a encomenda precisa de intervenção do designer."),
+                separator(),
                 temDesignBox,
                 criarCampoBox("Descrição do design", descricaoDesign),
                 criarCampoBox("Observações", observacoes)
         );
 
-        Button guardar = RececionistaUiFactory.primaryButton("Guardar");
-        Button cancelar = RececionistaUiFactory.secondaryButton("Cancelar");
+        Button guardar = primaryButton("Guardar Encomenda");
+        Button cancelar = secondaryButton("Cancelar");
 
         cancelar.setOnAction(e -> shell.navigateTo(RececionistaPage.ENCOMENDAS_LISTAR));
+
         guardar.setOnAction(e -> criarEncomenda(
                 clienteBox.getValue(),
                 entregaPicker.getValue() == null ? null : entregaPicker.getValue().toString(),
@@ -130,39 +150,49 @@ public class RececionistaCriarEncomendaPage {
                 estado
         ));
 
-        HBox botoes = new HBox(10, guardar, cancelar);
+        HBox botoes = new HBox(12, guardar, cancelar);
+        botoes.setAlignment(Pos.CENTER_LEFT);
 
-        VBox content = new VBox(18, dadosCard, linhasCard, designCard, botoes);
-
-        ScrollPane scrollPane = new ScrollPane(content);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
-
-        page.getChildren().add(scrollPane);
+        root.getChildren().addAll(
+                header,
+                estado,
+                dadosCard,
+                linhasCard,
+                designCard,
+                botoes
+        );
 
         carregarDados(clienteBox, linhasBox, estado);
 
-        return page;
+        return wrap(root);
     }
 
     private VBox criarCampoBox(String labelText, Control control) {
         VBox box = new VBox(8);
 
         Label label = new Label(labelText);
-        label.setStyle("-fx-font-size: 14; -fx-text-fill: #333333;");
+        label.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #334155;");
 
         control.setMaxWidth(Double.MAX_VALUE);
 
         box.getChildren().addAll(label, control);
         HBox.setHgrow(box, Priority.ALWAYS);
+
         return box;
     }
 
     private void adicionarLinha(VBox linhasBox) {
         LinhaItem linha = new LinhaItem();
 
-        Button removerBtn = RececionistaUiFactory.secondaryButton("Remover");
-        removerBtn.setOnAction(e -> linhasBox.getChildren().remove(linha.root));
+        Button removerBtn = dangerButton("Remover");
+        removerBtn.setOnAction(e -> {
+            if (linhasBox.getChildren().size() <= 1) {
+                mostrarErro("A encomenda tem de ter pelo menos uma linha.");
+                return;
+            }
+
+            linhasBox.getChildren().remove(linha.root);
+        });
 
         linha.root.getChildren().add(removerBtn);
         linhasBox.getChildren().add(linha.root);
@@ -210,6 +240,7 @@ public class RececionistaCriarEncomendaPage {
 
         task.setOnFailed(event -> {
             estado.setText("Erro ao carregar dados.");
+
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Erro");
             alert.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
@@ -347,6 +378,100 @@ public class RececionistaCriarEncomendaPage {
         thread.start();
     }
 
+    private HBox sectionHeader(String iconText, String title, String subtitle) {
+        HBox box = new HBox(14);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconLabel = new Label(iconText);
+        iconLabel.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconLabel);
+
+        VBox text = new VBox(4);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitleLabel = new Label(subtitle);
+        subtitleLabel.setStyle("-fx-font-size: 13; -fx-text-fill: #64748b;");
+
+        text.getChildren().addAll(titleLabel, subtitleLabel);
+        box.getChildren().addAll(icon, text);
+
+        return box;
+    }
+
+    private VBox card() {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+        return card;
+    }
+
+    private String inputStyle() {
+        return "-fx-background-color: white;" +
+                "-fx-border-color: #dbe2ea;" +
+                "-fx-border-radius: 14;" +
+                "-fx-background-radius: 14;" +
+                "-fx-padding: 11;" +
+                "-fx-font-size: 14;";
+    }
+
+    private Button primaryButton(String text) {
+        Button button = RececionistaUiFactory.primaryButton(text);
+        button.setPrefHeight(42);
+        return button;
+    }
+
+    private Button secondaryButton(String text) {
+        Button button = RececionistaUiFactory.secondaryButton(text);
+        button.setPrefHeight(42);
+        return button;
+    }
+
+    private Button dangerButton(String text) {
+        Button button = new Button(text);
+        button.setPrefHeight(42);
+        button.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: #fecaca;" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #dc2626;" +
+                        "-fx-padding: 0 18 0 18;" +
+                        "-fx-cursor: hand;"
+        );
+        return button;
+    }
+
+    private Region separator() {
+        Region region = new Region();
+        region.setPrefHeight(1);
+        region.setStyle("-fx-background-color: #e5e7eb;");
+        return region;
+    }
+
+    private Parent wrap(VBox root) {
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
+        return scrollPane;
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
@@ -371,9 +496,18 @@ public class RececionistaCriarEncomendaPage {
 
         private LinhaItem() {
             root.setUserData(this);
+            root.setAlignment(Pos.BOTTOM_LEFT);
+            root.setPadding(new Insets(14));
+            root.setStyle(
+                    "-fx-background-color: #f8fafc;" +
+                            "-fx-background-radius: 18;" +
+                            "-fx-border-color: #e5e7eb;" +
+                            "-fx-border-radius: 18;"
+            );
 
             chapeuBox.setPromptText("Seleciona um chapéu");
             chapeuBox.setMaxWidth(Double.MAX_VALUE);
+            chapeuBox.setStyle(inputStyle());
             chapeuBox.getItems().setAll(chapeusDisponiveis);
             chapeuBox.setConverter(new StringConverter<>() {
                 @Override
@@ -390,12 +524,18 @@ public class RececionistaCriarEncomendaPage {
                 }
             });
 
-            quantidadeField.setPromptText("Quantidade");
-            precoField.setPromptText("Preço unitário");
+            quantidadeField.setPromptText("Qtd.");
+            quantidadeField.setStyle(inputStyle());
+
+            precoField.setPromptText("Preço");
+            precoField.setStyle(inputStyle());
+
             tamanhoBox.setPromptText("Tamanho");
+            tamanhoBox.setStyle(inputStyle());
             tamanhoBox.getItems().setAll("S", "M", "L", "XL");
 
             coresField.setPromptText("Ex: Preto, Branco");
+            coresField.setStyle(inputStyle());
 
             chapeuBox.valueProperty().addListener((obs, oldValue, selected) -> {
                 if (selected != null && selected.getPrecoactvenda() != null) {
@@ -411,17 +551,15 @@ public class RececionistaCriarEncomendaPage {
             VBox tamanhoCol = criarCampoBox("Tamanho", tamanhoBox);
             VBox coresCol = criarCampoBox("Cores", coresField);
 
+            chapeuCol.setPrefWidth(280);
+            quantidadeCol.setPrefWidth(130);
+            precoCol.setPrefWidth(150);
+            tamanhoCol.setPrefWidth(130);
+            coresCol.setPrefWidth(220);
+
             HBox.setHgrow(chapeuCol, Priority.ALWAYS);
-            HBox.setHgrow(quantidadeCol, Priority.ALWAYS);
-            HBox.setHgrow(precoCol, Priority.ALWAYS);
-            HBox.setHgrow(tamanhoCol, Priority.ALWAYS);
-            HBox.setHgrow(coresCol, Priority.ALWAYS);
 
-            Region spacer = new Region();
-            spacer.setMinWidth(0);
-
-            root.getChildren().addAll(chapeuCol, quantidadeCol, precoCol, tamanhoCol, coresCol, spacer);
-            HBox.setHgrow(spacer, Priority.NEVER);
+            root.getChildren().addAll(chapeuCol, quantidadeCol, precoCol, tamanhoCol, coresCol);
         }
 
         private String formatarValor(BigDecimal valor) {

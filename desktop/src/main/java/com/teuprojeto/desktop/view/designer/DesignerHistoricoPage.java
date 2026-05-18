@@ -6,17 +6,14 @@ import com.teuprojeto.desktop.dto.EncomendaDto;
 import com.teuprojeto.desktop.service.ClienteApiService;
 import com.teuprojeto.desktop.service.DesignApiService;
 import com.teuprojeto.desktop.service.EncomendaApiService;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,94 +30,74 @@ public class DesignerHistoricoPage {
     }
 
     public Parent getView() {
-        VBox root = pageContainer("Histórico de Designs");
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
 
-        HBox actions = new HBox(10);
+        VBox header = new VBox(6);
+
+        Label title = new Label("Histórico de Designs");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Propostas enviadas ao cliente e respetivo estado.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
+
+        HBox topBar = new HBox(14);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+
+        TextField search = new TextField();
+        search.setPromptText("Pesquisar histórico...");
+        search.setPrefWidth(380);
+        search.setStyle(
+                "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-border-color: #dbe2ea;" +
+                        "-fx-padding: 12;" +
+                        "-fx-background-color: white;"
+        );
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button atualizar = secondaryButton("Atualizar");
-        actions.getChildren().addAll(spacer, atualizar);
+        Button atualizar = outlineButton("Atualizar");
+
+        topBar.getChildren().addAll(search, spacer, atualizar);
 
         Label estado = new Label("A carregar histórico...");
-        estado.setStyle("-fx-text-fill: #666666;");
+        estado.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
 
-        TableView<HistoricoRow> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        VBox lista = new VBox(16);
 
-        TableColumn<HistoricoRow, String> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDesignId()));
+        List<HistoricoRow> cache = new ArrayList<>();
 
-        TableColumn<HistoricoRow, String> encomendaCol = new TableColumn<>("Encomenda");
-        encomendaCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getEncomenda()));
+        search.textProperty().addListener((obs, oldValue, newValue) ->
+                atualizarLista(lista, cache, newValue)
+        );
 
-        TableColumn<HistoricoRow, String> clienteCol = new TableColumn<>("Cliente");
-        clienteCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCliente()));
+        root.getChildren().addAll(header, topBar, estado, lista);
 
-        TableColumn<HistoricoRow, String> estadoCol = new TableColumn<>("Estado");
-        estadoCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getEstado()));
-        estadoCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
+        Runnable carregar = () -> carregarHistorico(cache, lista, estado, search.getText());
 
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                    return;
-                }
+        atualizar.setOnAction(e -> carregar.run());
+        carregar.run();
 
-                setText(formatarEstado(item));
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
 
-                switch (item.toUpperCase()) {
-                    case "ENVIADO_CLIENTE" -> setStyle(
-                            "-fx-background-color: #fff4d6;" +
-                                    "-fx-text-fill: #a16207;" +
-                                    "-fx-font-weight: bold;" +
-                                    "-fx-alignment: center;"
-                    );
-
-                    case "APROVADO_CLIENTE" -> setStyle(
-                            "-fx-background-color: #dcfce7;" +
-                                    "-fx-text-fill: #166534;" +
-                                    "-fx-font-weight: bold;" +
-                                    "-fx-alignment: center;"
-                    );
-
-                    case "REJEITADO_CLIENTE" -> setStyle(
-                            "-fx-background-color: #fee2e2;" +
-                                    "-fx-text-fill: #991b1b;" +
-                                    "-fx-font-weight: bold;" +
-                                    "-fx-alignment: center;"
-                    );
-
-                    default -> setStyle(
-                            "-fx-font-weight: bold;" +
-                                    "-fx-alignment: center;"
-                    );
-                }
-            }
-        });
-
-        TableColumn<HistoricoRow, String> dataCol = new TableColumn<>("Data");
-        dataCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDataCriacao()));
-
-        ObservableList<HistoricoRow> rows = FXCollections.observableArrayList();
-
-        table.getColumns().addAll(idCol, encomendaCol, clienteCol, estadoCol, dataCol);
-        table.setItems(rows);
-
-        atualizar.setOnAction(e -> carregarHistorico(rows, estado));
-        carregarHistorico(rows, estado);
-
-        VBox card = card();
-        card.getChildren().addAll(actions, estado, table);
-        root.getChildren().add(card);
-
-        return root;
+        return scrollPane;
     }
 
-    private void carregarHistorico(ObservableList<HistoricoRow> rows, Label estado) {
+    private void carregarHistorico(
+            List<HistoricoRow> cache,
+            VBox lista,
+            Label estado,
+            String termo
+    ) {
         estado.setText("A carregar histórico...");
 
         Task<List<HistoricoRow>> task = new Task<>() {
@@ -152,8 +129,13 @@ public class DesignerHistoricoPage {
                             return db.compareTo(da);
                         })
                         .map(d -> {
-                            Long encomendaId = d.getIdEncomenda() == null ? null : d.getIdEncomenda().longValue();
-                            EncomendaDto encomenda = encomendaId == null ? null : mapaEncomendas.get(encomendaId);
+                            Long encomendaId = d.getIdEncomenda() == null
+                                    ? null
+                                    : d.getIdEncomenda().longValue();
+
+                            EncomendaDto encomenda = encomendaId == null
+                                    ? null
+                                    : mapaEncomendas.get(encomendaId);
 
                             String numero = encomendaId == null ? "-" : "ENC-" + encomendaId;
                             String cliente = "-";
@@ -167,7 +149,6 @@ public class DesignerHistoricoPage {
                             }
 
                             return new HistoricoRow(
-                                    d.getId(),
                                     d.getId() == null ? "-" : String.valueOf(d.getId()),
                                     numero,
                                     cliente,
@@ -180,8 +161,12 @@ public class DesignerHistoricoPage {
         };
 
         task.setOnSucceeded(event -> {
-            rows.setAll(task.getValue());
-            estado.setText("Histórico carregado. A aprovação/rejeição é feita pelo cliente na Web.");
+            cache.clear();
+            cache.addAll(task.getValue());
+
+            atualizarLista(lista, cache, termo);
+
+            estado.setText("Histórico carregado: " + cache.size() + " propostas.");
         });
 
         task.setOnFailed(event -> {
@@ -198,6 +183,109 @@ public class DesignerHistoricoPage {
         thread.start();
     }
 
+    private void atualizarLista(
+            VBox lista,
+            List<HistoricoRow> historico,
+            String termo
+    ) {
+        lista.getChildren().clear();
+
+        List<HistoricoRow> filtrados = historico.stream()
+                .filter(h -> matches(termo, h))
+                .toList();
+
+        if (filtrados.isEmpty()) {
+            lista.getChildren().add(emptyCard("Não existem propostas no histórico."));
+            return;
+        }
+
+        for (HistoricoRow row : filtrados) {
+            lista.getChildren().add(buildCard(row));
+        }
+    }
+
+    private boolean matches(String termo, HistoricoRow row) {
+        if (termo == null || termo.isBlank()) {
+            return true;
+        }
+
+        String t = termo.toLowerCase().trim();
+
+        return row.designId.toLowerCase().contains(t)
+                || row.encomenda.toLowerCase().contains(t)
+                || row.cliente.toLowerCase().contains(t)
+                || row.estado.toLowerCase().contains(t)
+                || row.dataCriacao.toLowerCase().contains(t);
+    }
+
+    private VBox buildCard(HistoricoRow row) {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+
+        HBox top = new HBox(14);
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconText = new Label("🎨");
+        iconText.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconText);
+
+        VBox left = new VBox(4);
+
+        Label design = new Label("Design #" + row.designId);
+        design.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label encomenda = new Label(row.encomenda);
+        encomenda.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
+
+        left.getChildren().addAll(design, encomenda);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label estado = estadoBadge(row.estado);
+
+        top.getChildren().addAll(icon, left, spacer, estado);
+
+        HBox infoGrid = new HBox(26);
+        infoGrid.getChildren().addAll(
+                infoBlock("Cliente", row.cliente),
+                infoBlock("Data", row.dataCriacao),
+                infoBlock("Decisão", formatarEstado(row.estado))
+        );
+
+        Label nota = new Label("A aprovação ou rejeição é feita pelo cliente na plataforma web.");
+        nota.setStyle("-fx-font-size: 12; -fx-text-fill: #64748b;");
+
+        card.getChildren().addAll(top, infoGrid, nota);
+
+        return card;
+    }
+
+    private Label estadoBadge(String estado) {
+        if (estado == null) {
+            return badge("-", "#e5e7eb", "#334155");
+        }
+
+        return switch (estado.toUpperCase()) {
+            case "ENVIADO_CLIENTE" -> badge("Enviado", "#ffedd5", "#ea580c");
+            case "APROVADO_CLIENTE" -> badge("Aprovado", "#dcfce7", "#15803d");
+            case "REJEITADO_CLIENTE" -> badge("Rejeitado", "#fee2e2", "#dc2626");
+            default -> badge(estado, "#e5e7eb", "#334155");
+        };
+    }
+
     private String formatarEstado(String estado) {
         if (estado == null) {
             return "-";
@@ -211,82 +299,69 @@ public class DesignerHistoricoPage {
         };
     }
 
-    private static class HistoricoRow {
-        private final Long id;
-        private final String designId;
-        private final String encomenda;
-        private final String cliente;
-        private final String estado;
-        private final String dataCriacao;
+    private VBox infoBlock(String title, String value) {
+        VBox box = new VBox(4);
 
-        public HistoricoRow(Long id, String designId, String encomenda, String cliente, String estado, String dataCriacao) {
-            this.id = id;
-            this.designId = designId;
-            this.encomenda = encomenda;
-            this.cliente = cliente;
-            this.estado = estado;
-            this.dataCriacao = dataCriacao;
-        }
+        Label t = new Label(title);
+        t.setStyle("-fx-font-size: 12; -fx-text-fill: #64748b;");
 
-        public Long getId() {
-            return id;
-        }
+        Label v = new Label(value == null ? "-" : value);
+        v.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
 
-        public String getDesignId() {
-            return designId;
-        }
-
-        public String getEncomenda() {
-            return encomenda;
-        }
-
-        public String getCliente() {
-            return cliente;
-        }
-
-        public String getEstado() {
-            return estado;
-        }
-
-        public String getDataCriacao() {
-            return dataCriacao;
-        }
-    }
-
-    private VBox pageContainer(String titleText) {
-        VBox root = new VBox(18);
-        root.setStyle("-fx-padding: 28; -fx-background-color: #efefef;");
-
-        Label title = new Label(titleText);
-        title.setStyle("-fx-font-size: 28; -fx-font-weight: bold;");
-
-        root.getChildren().add(title);
-        return root;
-    }
-
-    private VBox card() {
-        VBox box = new VBox(12);
-        box.setStyle(
-                "-fx-background-color: white;" +
-                        "-fx-background-radius: 12;" +
-                        "-fx-padding: 22;" +
-                        "-fx-border-color: #e0e0e0;" +
-                        "-fx-border-radius: 12;"
-        );
-
+        box.getChildren().addAll(t, v);
         return box;
     }
 
-    private Button secondaryButton(String text) {
+    private Label badge(String text, String bg, String fg) {
+        Label label = new Label(text);
+        label.setStyle(
+                "-fx-background-color: " + bg + ";" +
+                        "-fx-text-fill: " + fg + ";" +
+                        "-fx-padding: 7 12 7 12;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-font-size: 12;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        return label;
+    }
+
+    private VBox emptyCard(String text) {
+        VBox box = new VBox();
+        box.setPadding(new Insets(22));
+        box.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
+
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
+
+        box.getChildren().add(label);
+        return box;
+    }
+
+    private Button outlineButton(String text) {
         Button button = new Button(text);
+        button.setPrefHeight(42);
         button.setStyle(
                 "-fx-background-color: white;" +
-                        "-fx-text-fill: black;" +
-                        "-fx-border-color: #cccccc;" +
-                        "-fx-background-radius: 10;" +
-                        "-fx-border-radius: 10;"
+                        "-fx-border-color: #dbe2ea;" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #0f172a;" +
+                        "-fx-padding: 0 18 0 18;" +
+                        "-fx-cursor: hand;"
         );
 
         return button;
+    }
+
+    private record HistoricoRow(
+            String designId,
+            String encomenda,
+            String cliente,
+            String estado,
+            String dataCriacao
+    ) {
     }
 }

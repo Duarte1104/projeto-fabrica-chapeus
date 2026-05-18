@@ -7,11 +7,11 @@ import com.teuprojeto.desktop.service.ChapeuApiService;
 import com.teuprojeto.desktop.service.ChapeuMaterialApiService;
 import com.teuprojeto.desktop.service.MaterialApiService;
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
@@ -31,64 +31,42 @@ public class GestorChapeusPage {
     private final ChapeuMaterialApiService chapeuMaterialApiService = new ChapeuMaterialApiService();
 
     private final List<MaterialDto> materiaisDisponiveis = new ArrayList<>();
+    private final VBox listaChapeus = new VBox(16);
 
     public GestorChapeusPage(GestorShellView shell) {
         this.shell = shell;
     }
 
     public Parent getView() {
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
 
-        VBox root = GestorUiFactory.createPageContainer("Gestão de Chapéus");
+        VBox header = new VBox(6);
+
+        Label title = new Label("Gestão de Chapéus");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Crie chapéus para o catálogo e associe materiais de produção.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
 
         Label estado = new Label("A carregar dados...");
-        estado.setStyle("-fx-text-fill: #666666;");
+        estado.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
 
-        TableView<ChapeuDto> chapeusTable = new TableView<>();
-        chapeusTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        chapeusTable.setPrefHeight(260);
+        TextField nomeField = input("Nome do chapéu");
+        TextField precoField = input("Preço de venda");
 
-        TableColumn<ChapeuDto, String> codCol = new TableColumn<>("Código");
-        codCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
-                c.getValue().getCod() == null ? "-" : c.getValue().getCod().toString()
-        ));
-
-        TableColumn<ChapeuDto, String> nomeCol = new TableColumn<>("Nome");
-        nomeCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
-                c.getValue().getNome()
-        ));
-
-        TableColumn<ChapeuDto, String> precoCol = new TableColumn<>("Preço");
-        precoCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
-                c.getValue().getPrecoactvenda() == null ? "-" : c.getValue().getPrecoactvenda() + " €"
-        ));
-
-        TableColumn<ChapeuDto, String> imagemCol = new TableColumn<>("Imagem");
-        imagemCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
-                c.getValue().getImagemUrl() == null ? "-" : "Com imagem"
-        ));
-
-        chapeusTable.getColumns().addAll(codCol, nomeCol, precoCol, imagemCol);
-
-        TextField nomeField = new TextField();
-        nomeField.setPromptText("Nome do chapéu");
-
-        TextField precoField = new TextField();
-        precoField.setPromptText("Preço de venda");
-
-        TextField imagemField = new TextField();
-        imagemField.setPromptText("Nenhuma imagem selecionada");
+        TextField imagemField = input("Nenhuma imagem selecionada");
         imagemField.setEditable(false);
 
         final Path[] imagemSelecionada = {null};
 
-        Button escolherImagem = GestorUiFactory.secondaryButton("Escolher Imagem");
-
+        Button escolherImagem = secondaryButton("Escolher Imagem");
         escolherImagem.setOnAction(e -> {
-
             FileChooser chooser = new FileChooser();
-
             chooser.setTitle("Selecionar imagem do chapéu");
-
             chooser.getExtensionFilters().add(
                     new FileChooser.ExtensionFilter(
                             "Imagens",
@@ -111,101 +89,84 @@ public class GestorChapeusPage {
         materialInicialBox.setMaxWidth(Double.MAX_VALUE);
         materialInicialBox.setPromptText("Material obrigatório");
         materialInicialBox.setConverter(materialConverter());
+        materialInicialBox.setStyle(inputStyle());
 
-        TextField quantidadeInicialField = new TextField();
-        quantidadeInicialField.setPromptText("Quantidade por unidade");
+        TextField quantidadeInicialField = input("Quantidade por unidade");
 
-        Button criarChapeu = GestorUiFactory.primaryButton("Criar Chapéu com Material");
-
+        Button criarChapeu = primaryButton("Criar Chapéu");
         criarChapeu.setOnAction(e -> criarChapeuComMaterial(
                 nomeField,
                 precoField,
-                imagemSelecionada[0],
+                imagemSelecionada,
                 materialInicialBox,
                 quantidadeInicialField,
-                chapeusTable,
                 estado,
                 imagemField
         ));
 
-        VBox formChapeu = GestorUiFactory.createCard();
-
+        VBox formChapeu = card();
         formChapeu.getChildren().addAll(
-                new Label("Novo Chapéu"),
-                new Label("O código é gerado automaticamente pelo sistema."),
-                nomeField,
-                precoField,
-                new Label("Imagem"),
-                new HBox(10, imagemField, escolherImagem),
-                new Label("Material inicial obrigatório"),
-                materialInicialBox,
-                quantidadeInicialField,
+                sectionHeader("🎩", "Novo Chapéu", "Crie um chapéu com imagem e material inicial obrigatório."),
+                separator(),
+                criarCampoBox("Nome", nomeField),
+                criarCampoBox("Preço de venda", precoField),
+                criarCampoBox("Imagem", new HBox(10, imagemField, escolherImagem)),
+                criarCampoBox("Material inicial obrigatório", materialInicialBox),
+                criarCampoBox("Quantidade necessária para produzir 1 unidade", quantidadeInicialField),
                 criarChapeu
         );
-
-        HBox.setHgrow(imagemField, Priority.ALWAYS);
 
         ComboBox<ChapeuDto> chapeuBox = new ComboBox<>();
         chapeuBox.setMaxWidth(Double.MAX_VALUE);
         chapeuBox.setConverter(chapeuConverter());
+        chapeuBox.setStyle(inputStyle());
 
         ComboBox<MaterialDto> materialBox = new ComboBox<>();
         materialBox.setMaxWidth(Double.MAX_VALUE);
         materialBox.setConverter(materialConverter());
+        materialBox.setStyle(inputStyle());
 
-        TextField quantidadePorUnidadeField = new TextField();
-        quantidadePorUnidadeField.setPromptText("Quantidade por unidade");
+        TextField quantidadePorUnidadeField = input("Quantidade por unidade");
 
-        Button associar = GestorUiFactory.primaryButton("Associar Material");
+        Button associar = primaryButton("Associar Material");
+
+        VBox materiaisAssociadosBox = new VBox(12);
 
         associar.setOnAction(e ->
                 associarMaterial(
                         chapeuBox,
                         materialBox,
                         quantidadePorUnidadeField,
+                        materiaisAssociadosBox,
                         estado
                 )
         );
 
-        TableView<ChapeuMaterialLinha> materiaisTable = new TableView<>();
-        materiaisTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        materiaisTable.setPrefHeight(220);
-
-        TableColumn<ChapeuMaterialLinha, String> materialCol = new TableColumn<>("Material");
-        materialCol.setCellValueFactory(c ->
-                new javafx.beans.property.SimpleStringProperty(c.getValue().material())
-        );
-
-        TableColumn<ChapeuMaterialLinha, String> quantidadeCol = new TableColumn<>("Quantidade por unidade");
-        quantidadeCol.setCellValueFactory(c ->
-                new javafx.beans.property.SimpleStringProperty(c.getValue().quantidade())
-        );
-
-        materiaisTable.getColumns().addAll(materialCol, quantidadeCol);
-
         chapeuBox.valueProperty().addListener((obs, oldValue, selected) ->
-                carregarMateriaisDoChapeu(selected, materiaisTable, estado)
+                carregarMateriaisDoChapeu(selected, materiaisAssociadosBox, estado)
         );
 
-        VBox associacaoCard = GestorUiFactory.createCard();
-
+        VBox associacaoCard = card();
         associacaoCard.getChildren().addAll(
-                new Label("Associar mais materiais a um chapéu"),
-                new Label("Chapéu"),
-                chapeuBox,
-                new Label("Material"),
-                materialBox,
-                new Label("Quantidade necessária para produzir 1 unidade"),
-                quantidadePorUnidadeField,
+                sectionHeader("🧵", "Materiais do Chapéu", "Associe materiais adicionais ao chapéu selecionado."),
+                separator(),
+                criarCampoBox("Chapéu", chapeuBox),
+                criarCampoBox("Material", materialBox),
+                criarCampoBox("Quantidade necessária para produzir 1 unidade", quantidadePorUnidadeField),
                 associar,
-                new Label("Materiais associados"),
-                materiaisTable
+                smallTitle("Materiais associados"),
+                materiaisAssociadosBox
         );
 
-        VBox listaCard = GestorUiFactory.createCard();
-        listaCard.getChildren().addAll(new Label("Chapéus registados"), chapeusTable);
+        VBox listaCard = card();
+        listaCard.getChildren().addAll(
+                sectionHeader("📋", "Chapéus Registados", "Chapéus disponíveis para o catálogo da parte web."),
+                separator(),
+                listaChapeus
+        );
 
         root.getChildren().addAll(
+                header,
                 estado,
                 formChapeu,
                 associacaoCard,
@@ -213,74 +174,124 @@ public class GestorChapeusPage {
         );
 
         carregarTudo(
-                chapeusTable,
                 chapeuBox,
                 materialBox,
                 materialInicialBox,
                 estado
         );
 
-        ScrollPane scrollPane = new ScrollPane(root);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPannable(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setStyle("-fx-background: #efefef; -fx-background-color: #efefef;");
-
-        return scrollPane;
+        return wrap(root);
     }
 
     private void carregarTudo(
-            TableView<ChapeuDto> chapeusTable,
             ComboBox<ChapeuDto> chapeuBox,
             ComboBox<MaterialDto> materialBox,
             ComboBox<MaterialDto> materialInicialBox,
             Label estado
     ) {
-
         try {
-
             List<ChapeuDto> chapeus = chapeuApiService.listar();
 
             materiaisDisponiveis.clear();
             materiaisDisponiveis.addAll(materialApiService.listarTodos());
 
-            chapeusTable.setItems(FXCollections.observableArrayList(chapeus));
-
             chapeuBox.getItems().setAll(chapeus);
-
             materialBox.getItems().setAll(materiaisDisponiveis);
-
             materialInicialBox.getItems().setAll(materiaisDisponiveis);
+
+            atualizarListaChapeus(chapeus);
 
             estado.setText("Dados carregados.");
 
         } catch (RuntimeException e) {
-
             estado.setText("Erro ao carregar dados.");
             mostrarErro(e.getMessage());
         }
     }
 
+    private void atualizarListaChapeus(List<ChapeuDto> chapeus) {
+        listaChapeus.getChildren().clear();
+
+        if (chapeus == null || chapeus.isEmpty()) {
+            listaChapeus.getChildren().add(emptyBox("Ainda não existem chapéus registados."));
+            return;
+        }
+
+        for (ChapeuDto chapeu : chapeus) {
+            listaChapeus.getChildren().add(chapeuCard(chapeu));
+        }
+    }
+
+    private VBox chapeuCard(ChapeuDto chapeu) {
+        VBox card = new VBox(16);
+        card.setPadding(new Insets(18));
+        card.setStyle(
+                "-fx-background-color: #f8fafc;" +
+                        "-fx-background-radius: 18;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-border-radius: 18;"
+        );
+
+        HBox top = new HBox(14);
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconText = new Label("🎩");
+        iconText.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconText);
+
+        VBox text = new VBox(4);
+
+        Label nome = new Label(valor(chapeu.getNome()));
+        nome.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label codigo = new Label(chapeu.getCod() == null ? "Código: -" : "Código: " + chapeu.getCod());
+        codigo.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
+
+        text.getChildren().addAll(nome, codigo);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label preco = badge(
+                formatarValor(chapeu.getPrecoactvenda()),
+                "#dcfce7",
+                "#15803d"
+        );
+
+        Label imagem = badge(
+                chapeu.getImagemUrl() == null || chapeu.getImagemUrl().isBlank() ? "Sem imagem" : "Com imagem",
+                chapeu.getImagemUrl() == null || chapeu.getImagemUrl().isBlank() ? "#fee2e2" : "#dbeafe",
+                chapeu.getImagemUrl() == null || chapeu.getImagemUrl().isBlank() ? "#dc2626" : "#2563eb"
+        );
+
+        top.getChildren().addAll(icon, text, spacer, preco, imagem);
+
+        card.getChildren().add(top);
+
+        return card;
+    }
+
     private void criarChapeuComMaterial(
             TextField nomeField,
             TextField precoField,
-            Path imagemPath,
+            Path[] imagemSelecionada,
             ComboBox<MaterialDto> materialInicialBox,
             TextField quantidadeInicialField,
-            TableView<ChapeuDto> chapeusTable,
             Label estado,
             TextField imagemField
     ) {
-
         try {
-
             if (isBlank(nomeField.getText()) || isBlank(precoField.getText())) {
                 mostrarErro("Preenche nome e preço.");
                 return;
             }
 
-            if (imagemPath == null) {
+            if (imagemSelecionada[0] == null) {
                 mostrarErro("Seleciona uma imagem do chapéu.");
                 return;
             }
@@ -300,14 +311,13 @@ public class GestorChapeusPage {
             ChapeuDto chapeuCriado = chapeuApiService.criar(
                     nomeField.getText().trim(),
                     precoField.getText().trim(),
-                    imagemPath
+                    imagemSelecionada[0]
             );
 
             ChapeuMaterialDto associacao = new ChapeuMaterialDto();
 
             associacao.setIdChapeu(chapeuCriado.getCod());
             associacao.setIdMaterial(material.getId());
-
             associacao.setQuantidadePorUnidade(
                     new BigDecimal(quantidadeInicialField.getText().trim())
             );
@@ -318,17 +328,14 @@ public class GestorChapeusPage {
             precoField.clear();
             imagemField.clear();
             quantidadeInicialField.clear();
-
             materialInicialBox.setValue(null);
+            imagemSelecionada[0] = null;
 
-            chapeusTable.setItems(
-                    FXCollections.observableArrayList(chapeuApiService.listar())
-            );
+            atualizarListaChapeus(chapeuApiService.listar());
 
             estado.setText("Chapéu criado com sucesso.");
 
         } catch (RuntimeException e) {
-
             mostrarErro(e.getMessage());
         }
     }
@@ -337,11 +344,10 @@ public class GestorChapeusPage {
             ComboBox<ChapeuDto> chapeuBox,
             ComboBox<MaterialDto> materialBox,
             TextField quantidadePorUnidadeField,
+            VBox materiaisAssociadosBox,
             Label estado
     ) {
-
         try {
-
             ChapeuDto chapeu = chapeuBox.getValue();
             MaterialDto material = materialBox.getValue();
 
@@ -361,10 +367,8 @@ public class GestorChapeusPage {
             }
 
             ChapeuMaterialDto dto = new ChapeuMaterialDto();
-
             dto.setIdChapeu(chapeu.getCod());
             dto.setIdMaterial(material.getId());
-
             dto.setQuantidadePorUnidade(
                     new BigDecimal(quantidadePorUnidadeField.getText().trim())
             );
@@ -373,27 +377,28 @@ public class GestorChapeusPage {
 
             quantidadePorUnidadeField.clear();
 
+            carregarMateriaisDoChapeu(chapeu, materiaisAssociadosBox, estado);
+
             estado.setText("Material associado ao chapéu com sucesso.");
 
         } catch (RuntimeException e) {
-
             mostrarErro(e.getMessage());
         }
     }
 
     private void carregarMateriaisDoChapeu(
             ChapeuDto chapeu,
-            TableView<ChapeuMaterialLinha> table,
+            VBox materiaisAssociadosBox,
             Label estado
     ) {
+        materiaisAssociadosBox.getChildren().clear();
 
         if (chapeu == null || chapeu.getCod() == null) {
-            table.getItems().clear();
+            materiaisAssociadosBox.getChildren().add(emptyBox("Seleciona um chapéu para ver os materiais."));
             return;
         }
 
         try {
-
             List<ChapeuMaterialDto> associacoes =
                     chapeuMaterialApiService.listarPorChapeu(chapeu.getCod());
 
@@ -402,44 +407,219 @@ public class GestorChapeusPage {
                             .filter(m -> m.getId() != null)
                             .collect(Collectors.toMap(MaterialDto::getId, m -> m, (a, b) -> a));
 
-            List<ChapeuMaterialLinha> linhas =
-                    associacoes.stream()
-                            .map(a -> {
+            if (associacoes.isEmpty()) {
+                materiaisAssociadosBox.getChildren().add(emptyBox("Este chapéu ainda não tem materiais associados."));
+            } else {
+                for (ChapeuMaterialDto associacao : associacoes) {
+                    MaterialDto material = materiaisPorId.get(associacao.getIdMaterial());
 
-                                MaterialDto material = materiaisPorId.get(a.getIdMaterial());
+                    String nomeMaterial =
+                            material == null
+                                    ? "Material #" + associacao.getIdMaterial()
+                                    : material.getNome() + " (" + material.getUnidade() + ")";
 
-                                String nomeMaterial =
-                                        material == null
-                                                ? "Material #" + a.getIdMaterial()
-                                                : material.getNome() + " (" + material.getUnidade() + ")";
+                    String quantidade =
+                            associacao.getQuantidadePorUnidade() == null
+                                    ? "-"
+                                    : associacao.getQuantidadePorUnidade().toPlainString();
 
-                                return new ChapeuMaterialLinha(
-                                        nomeMaterial,
-                                        a.getQuantidadePorUnidade() == null
-                                                ? "-"
-                                                : a.getQuantidadePorUnidade().toPlainString()
-                                );
-                            })
-                            .toList();
-
-            table.setItems(FXCollections.observableArrayList(linhas));
+                    materiaisAssociadosBox.getChildren().add(materialRow(nomeMaterial, quantidade));
+                }
+            }
 
             estado.setText("Materiais do chapéu carregados.");
 
         } catch (RuntimeException e) {
-
             estado.setText("Erro ao carregar materiais do chapéu.");
             mostrarErro(e.getMessage());
         }
     }
 
+    private HBox materialRow(String material, String quantidade) {
+        HBox row = new HBox(14);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(14));
+        row.setStyle(
+                "-fx-background-color: #f8fafc;" +
+                        "-fx-background-radius: 18;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-border-radius: 18;"
+        );
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(46, 46);
+        icon.setPrefSize(46, 46);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 15;");
+
+        Label iconText = new Label("🧵");
+        iconText.setStyle("-fx-font-size: 20;");
+        icon.getChildren().add(iconText);
+
+        VBox text = new VBox(4);
+
+        Label nome = new Label(material);
+        nome.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label qtd = new Label("Quantidade por unidade: " + quantidade);
+        qtd.setStyle("-fx-font-size: 12; -fx-text-fill: #64748b;");
+
+        text.getChildren().addAll(nome, qtd);
+
+        row.getChildren().addAll(icon, text);
+
+        return row;
+    }
+
+    private HBox sectionHeader(String iconText, String title, String subtitle) {
+        HBox box = new HBox(14);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconLabel = new Label(iconText);
+        iconLabel.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconLabel);
+
+        VBox text = new VBox(4);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitleLabel = new Label(subtitle);
+        subtitleLabel.setStyle("-fx-font-size: 13; -fx-text-fill: #64748b;");
+
+        text.getChildren().addAll(titleLabel, subtitleLabel);
+        box.getChildren().addAll(icon, text);
+
+        return box;
+    }
+
+    private VBox criarCampoBox(String labelText, Control control) {
+        VBox box = new VBox(8);
+
+        Label label = new Label(labelText);
+        label.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #334155;");
+
+        control.setMaxWidth(Double.MAX_VALUE);
+
+        box.getChildren().addAll(label, control);
+        HBox.setHgrow(box, Priority.ALWAYS);
+
+        return box;
+    }
+
+    private VBox criarCampoBox(String labelText, HBox controlBox) {
+        VBox box = new VBox(8);
+
+        Label label = new Label(labelText);
+        label.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #334155;");
+
+        for (var node : controlBox.getChildren()) {
+            HBox.setHgrow(node, Priority.ALWAYS);
+        }
+
+        box.getChildren().addAll(label, controlBox);
+        return box;
+    }
+
+    private VBox card() {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+        return card;
+    }
+
+    private VBox emptyBox(String text) {
+        VBox box = new VBox();
+        box.setPadding(new Insets(18));
+        box.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 16;");
+
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
+
+        box.getChildren().add(label);
+
+        return box;
+    }
+
+    private Label smallTitle(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 17; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+        return label;
+    }
+
+    private Label badge(String text, String bg, String fg) {
+        Label label = new Label(text);
+
+        label.setStyle(
+                "-fx-background-color: " + bg + ";" +
+                        "-fx-text-fill: " + fg + ";" +
+                        "-fx-padding: 7 12 7 12;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-font-size: 12;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        return label;
+    }
+
+    private Button primaryButton(String text) {
+        Button button = GestorUiFactory.primaryButton(text);
+        button.setPrefHeight(42);
+        return button;
+    }
+
+    private Button secondaryButton(String text) {
+        Button button = GestorUiFactory.secondaryButton(text);
+        button.setPrefHeight(42);
+        return button;
+    }
+
+    private TextField input(String prompt) {
+        TextField field = new TextField();
+        field.setPromptText(prompt);
+        field.setStyle(inputStyle());
+        return field;
+    }
+
+    private String inputStyle() {
+        return "-fx-background-color: white;" +
+                "-fx-border-color: #dbe2ea;" +
+                "-fx-border-radius: 14;" +
+                "-fx-background-radius: 14;" +
+                "-fx-padding: 11;" +
+                "-fx-font-size: 14;";
+    }
+
+    private Region separator() {
+        Region region = new Region();
+        region.setPrefHeight(1);
+        region.setStyle("-fx-background-color: #e5e7eb;");
+        return region;
+    }
+
+    private Parent wrap(VBox root) {
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
+        return scrollPane;
+    }
+
     private StringConverter<MaterialDto> materialConverter() {
-
         return new StringConverter<>() {
-
             @Override
             public String toString(MaterialDto value) {
-
                 if (value == null) {
                     return "";
                 }
@@ -455,12 +635,9 @@ public class GestorChapeusPage {
     }
 
     private StringConverter<ChapeuDto> chapeuConverter() {
-
         return new StringConverter<>() {
-
             @Override
             public String toString(ChapeuDto value) {
-
                 if (value == null) {
                     return "";
                 }
@@ -475,20 +652,26 @@ public class GestorChapeusPage {
         };
     }
 
+    private String formatarValor(BigDecimal valor) {
+        if (valor == null) {
+            return "-";
+        }
+
+        return String.format("%.2f €", valor.doubleValue()).replace(".", ",");
+    }
+
+    private String valor(String value) {
+        return value == null || value.isBlank() ? "-" : value;
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
     private void mostrarErro(String mensagem) {
-
         Alert alert = new Alert(Alert.AlertType.ERROR);
-
         alert.setHeaderText("Erro");
         alert.setContentText(mensagem);
-
         alert.showAndWait();
-    }
-
-    private record ChapeuMaterialLinha(String material, String quantidade) {
     }
 }

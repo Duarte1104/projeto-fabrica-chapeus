@@ -4,18 +4,14 @@ import com.teuprojeto.desktop.dto.ClienteDto;
 import com.teuprojeto.desktop.dto.EncomendaDto;
 import com.teuprojeto.desktop.service.ClienteApiService;
 import com.teuprojeto.desktop.service.EncomendaApiService;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,159 +28,78 @@ public class RececionistaEncomendasListPage {
     }
 
     public Parent getView() {
-        VBox root = RececionistaUiFactory.createPageContainer("Encomendas");
+        VBox root = new VBox(24);
+        root.setPadding(new Insets(28));
+        root.setStyle("-fx-background-color: #f4f7fb;");
 
-        HBox actions = new HBox(10);
+        VBox header = new VBox(6);
+
+        Label title = new Label("Encomendas");
+        title.setStyle("-fx-font-size: 30; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Consulte, pesquise e acompanhe as encomendas da fábrica.");
+        subtitle.setStyle("-fx-font-size: 14; -fx-text-fill: #64748b;");
+
+        header.getChildren().addAll(title, subtitle);
+
+        HBox topBar = new HBox(14);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+
         TextField search = new TextField();
         search.setPromptText("Pesquisar encomenda...");
-        HBox.setHgrow(search, Priority.ALWAYS);
+        search.setPrefWidth(380);
+        search.setStyle(
+                "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-border-color: #dbe2ea;" +
+                        "-fx-padding: 12;" +
+                        "-fx-background-color: white;"
+        );
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button nova = RececionistaUiFactory.primaryButton("Nova Encomenda");
         nova.setOnAction(e -> shell.navigateTo(RececionistaPage.ENCOMENDAS_CRIAR));
 
-        Button atualizar = RececionistaUiFactory.secondaryButton("Atualizar");
+        Button atualizar = outlineButton("Atualizar");
 
-        actions.getChildren().addAll(search, nova, atualizar);
+        topBar.getChildren().addAll(search, spacer, nova, atualizar);
 
         Label statusLabel = new Label("A carregar encomendas...");
-        statusLabel.setStyle("-fx-text-fill: #666666;");
+        statusLabel.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
 
-        TableView<EncomendaRow> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        VBox lista = new VBox(16);
 
-        TableColumn<EncomendaRow, String> numero = new TableColumn<>("Número");
-        numero.setCellValueFactory(c -> c.getValue().numeroProperty());
+        List<EncomendaRow> cache = new ArrayList<>();
 
-        TableColumn<EncomendaRow, String> cliente = new TableColumn<>("Cliente");
-        cliente.setCellValueFactory(c -> c.getValue().clienteProperty());
+        search.textProperty().addListener((obs, oldValue, newValue) ->
+                atualizarLista(lista, cache, newValue, statusLabel)
+        );
 
-        TableColumn<EncomendaRow, String> estado = new TableColumn<>("Estado");
-        estado.setCellValueFactory(c -> c.getValue().estadoProperty());
+        root.getChildren().addAll(header, topBar, statusLabel, lista);
 
-        TableColumn<EncomendaRow, String> design = new TableColumn<>("Design");
-        design.setCellValueFactory(c -> c.getValue().designProperty());
+        Runnable carregar = () -> carregarEncomendas(cache, lista, statusLabel, search.getText());
 
-        ObservableList<EncomendaRow> masterData = FXCollections.observableArrayList();
+        atualizar.setOnAction(e -> carregar.run());
+        carregar.run();
 
-        TableColumn<EncomendaRow, Void> acao = new TableColumn<>("Ações");
-        acao.setCellFactory(col -> new TableCell<>() {
-            private final Button verBtn = new Button("Ver");
-            private final Button apagarBtn = new Button("Apagar");
-            private final HBox box = new HBox(8, verBtn, apagarBtn);
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #f4f7fb; -fx-background-color: #f4f7fb;");
 
-            {
-                box.setAlignment(Pos.CENTER);
-
-                verBtn.setStyle("-fx-background-color: white; -fx-border-color: #cfcfcf; -fx-background-radius: 6; -fx-border-radius: 6;");
-                apagarBtn.setStyle("-fx-background-color: white; -fx-border-color: #d88; -fx-text-fill: #a33; -fx-background-radius: 6; -fx-border-radius: 6;");
-
-                verBtn.setOnAction(e -> {
-                    EncomendaRow row = getTableView().getItems().get(getIndex());
-                    shell.setEncomendaSelecionadaId(row.getId());
-                    shell.navigateTo(RececionistaPage.ENCOMENDAS_VER);
-                });
-
-                apagarBtn.setOnAction(e -> {
-                    EncomendaRow row = getTableView().getItems().get(getIndex());
-                    confirmarEApagar(row, masterData, statusLabel, table);
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : box);
-            }
-        });
-
-        table.getColumns().addAll(numero, cliente, estado, design, acao);
-
-        FilteredList<EncomendaRow> filtrados = new FilteredList<>(masterData, encomenda -> true);
-
-        search.textProperty().addListener((obs, oldValue, newValue) -> {
-            String termo = newValue == null ? "" : newValue.trim().toLowerCase();
-
-            filtrados.setPredicate(encomenda -> {
-                if (termo.isBlank()) {
-                    return true;
-                }
-
-                return encomenda.getNumero().toLowerCase().contains(termo)
-                        || encomenda.getCliente().toLowerCase().contains(termo)
-                        || encomenda.getEstado().toLowerCase().contains(termo)
-                        || encomenda.getDesign().toLowerCase().contains(termo);
-            });
-        });
-
-        SortedList<EncomendaRow> ordenados = new SortedList<>(filtrados);
-        ordenados.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(ordenados);
-
-        atualizar.setOnAction(e -> carregarEncomendas(masterData, statusLabel, table));
-        carregarEncomendas(masterData, statusLabel, table);
-
-        VBox card = RececionistaUiFactory.createCard();
-        card.getChildren().addAll(actions, statusLabel, table);
-
-        root.getChildren().add(card);
-        return root;
+        return scrollPane;
     }
 
-    private void confirmarEApagar(EncomendaRow row,
-                                  ObservableList<EncomendaRow> masterData,
-                                  Label statusLabel,
-                                  TableView<EncomendaRow> table) {
-
-        Alert confirmacao = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmacao.setHeaderText("Confirmar eliminação");
-        confirmacao.setContentText("Tem a certeza que deseja apagar a encomenda " + row.getNumero() + "?");
-
-        Optional<ButtonType> resultado = confirmacao.showAndWait();
-
-        if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
-            return;
-        }
-
-        statusLabel.setText("A apagar encomenda...");
-        table.setDisable(true);
-
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                encomendaApiService.apagar(row.getId());
-                return null;
-            }
-        };
-
-        task.setOnSucceeded(event -> {
-            table.setDisable(false);
-
-            Alert ok = new Alert(Alert.AlertType.INFORMATION);
-            ok.setHeaderText("Encomenda apagada");
-            ok.setContentText("A encomenda foi apagada com sucesso.");
-            ok.showAndWait();
-
-            carregarEncomendas(masterData, statusLabel, table);
-        });
-
-        task.setOnFailed(event -> {
-            table.setDisable(false);
-            statusLabel.setText("Erro ao apagar encomenda.");
-
-            Alert erro = new Alert(Alert.AlertType.ERROR);
-            erro.setHeaderText("Erro ao apagar encomenda");
-            erro.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
-            erro.showAndWait();
-        });
-
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    private void carregarEncomendas(ObservableList<EncomendaRow> masterData, Label statusLabel, TableView<EncomendaRow> table) {
+    private void carregarEncomendas(
+            List<EncomendaRow> cache,
+            VBox lista,
+            Label statusLabel,
+            String termo
+    ) {
         statusLabel.setText("A carregar encomendas...");
-        table.setDisable(true);
 
         Task<List<EncomendaRow>> task = new Task<>() {
             @Override
@@ -204,7 +119,10 @@ public class RececionistaEncomendasListPage {
                         .map(encomenda -> new EncomendaRow(
                                 encomenda.getNum(),
                                 "ENC-" + encomenda.getNum(),
-                                nomesClientes.getOrDefault(encomenda.getIdcliente(), "Cliente #" + encomenda.getIdcliente()),
+                                nomesClientes.getOrDefault(
+                                        encomenda.getIdcliente(),
+                                        "Cliente #" + encomenda.getIdcliente()
+                                ),
                                 mapearEstado(encomenda.getIdestado()),
                                 Boolean.TRUE.equals(encomenda.getDesign()) ? "Sim" : "Não"
                         ))
@@ -213,14 +131,15 @@ public class RececionistaEncomendasListPage {
         };
 
         task.setOnSucceeded(event -> {
-            masterData.setAll(task.getValue());
-            statusLabel.setText("Encomendas carregadas: " + masterData.size());
-            table.setDisable(false);
+            cache.clear();
+            cache.addAll(task.getValue());
+
+            atualizarLista(lista, cache, termo, statusLabel);
+            statusLabel.setText("Encomendas carregadas: " + cache.size());
         });
 
         task.setOnFailed(event -> {
             statusLabel.setText("Erro ao carregar encomendas.");
-            table.setDisable(false);
 
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText("Erro ao obter encomendas");
@@ -231,6 +150,203 @@ public class RececionistaEncomendasListPage {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void atualizarLista(
+            VBox lista,
+            List<EncomendaRow> encomendas,
+            String termo,
+            Label statusLabel
+    ) {
+        lista.getChildren().clear();
+
+        List<EncomendaRow> filtradas = encomendas.stream()
+                .filter(e -> matches(termo, e))
+                .toList();
+
+        if (filtradas.isEmpty()) {
+            lista.getChildren().add(emptyCard("Nenhuma encomenda encontrada."));
+            return;
+        }
+
+        for (EncomendaRow encomenda : filtradas) {
+            lista.getChildren().add(buildCard(encomenda, encomendas, lista, statusLabel));
+        }
+    }
+
+    private boolean matches(String termo, EncomendaRow encomenda) {
+        if (termo == null || termo.isBlank()) {
+            return true;
+        }
+
+        String t = termo.toLowerCase().trim();
+
+        return texto(encomenda.getNumero()).contains(t)
+                || texto(encomenda.getCliente()).contains(t)
+                || texto(encomenda.getEstado()).contains(t)
+                || texto(encomenda.getDesign()).contains(t);
+    }
+
+    private VBox buildCard(
+            EncomendaRow encomenda,
+            List<EncomendaRow> cache,
+            VBox lista,
+            Label statusLabel
+    ) {
+        VBox card = new VBox(18);
+        card.setPadding(new Insets(22));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 22;" +
+                        "-fx-border-radius: 22;" +
+                        "-fx-border-color: #e5e7eb;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 18, 0, 0, 6);"
+        );
+
+        HBox top = new HBox(14);
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane icon = new StackPane();
+        icon.setMinSize(58, 58);
+        icon.setPrefSize(58, 58);
+        icon.setStyle("-fx-background-color: #eff6ff; -fx-background-radius: 18;");
+
+        Label iconText = new Label("📦");
+        iconText.setStyle("-fx-font-size: 24;");
+        icon.getChildren().add(iconText);
+
+        VBox left = new VBox(4);
+
+        Label numero = new Label(encomenda.getNumero());
+        numero.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        Label cliente = new Label(encomenda.getCliente());
+        cliente.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
+
+        left.getChildren().addAll(numero, cliente);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label estado = estadoBadge(encomenda.getEstado());
+        Label design = badge(
+                "Design: " + encomenda.getDesign(),
+                encomenda.getDesign().equalsIgnoreCase("Sim") ? "#fef3c7" : "#e5e7eb",
+                encomenda.getDesign().equalsIgnoreCase("Sim") ? "#92400e" : "#334155"
+        );
+
+        Button ver = RececionistaUiFactory.primaryButton("Ver");
+        ver.setOnAction(e -> {
+            shell.setEncomendaSelecionadaId(encomenda.getId());
+            shell.navigateTo(RececionistaPage.ENCOMENDAS_VER);
+        });
+
+        Button apagar = dangerButton("Apagar");
+        apagar.setOnAction(e -> confirmarEApagar(encomenda, cache, lista, statusLabel));
+
+        top.getChildren().addAll(icon, left, spacer, estado, design, ver, apagar);
+
+        HBox infoGrid = new HBox(26);
+        infoGrid.getChildren().addAll(
+                infoBlock("Número", encomenda.getNumero()),
+                infoBlock("Cliente", encomenda.getCliente()),
+                infoBlock("Estado", formatarEstado(encomenda.getEstado())),
+                infoBlock("Design", encomenda.getDesign())
+        );
+
+        card.getChildren().addAll(top, infoGrid);
+
+        return card;
+    }
+
+    private void confirmarEApagar(
+            EncomendaRow row,
+            List<EncomendaRow> cache,
+            VBox lista,
+            Label statusLabel
+    ) {
+        Alert confirmacao = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacao.setHeaderText("Confirmar eliminação");
+        confirmacao.setContentText("Tem a certeza que deseja apagar a encomenda " + row.getNumero() + "?");
+
+        Optional<ButtonType> resultado = confirmacao.showAndWait();
+
+        if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
+            return;
+        }
+
+        statusLabel.setText("A apagar encomenda...");
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                encomendaApiService.apagar(row.getId());
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setHeaderText("Encomenda apagada");
+            ok.setContentText("A encomenda foi apagada com sucesso.");
+            ok.showAndWait();
+
+            carregarEncomendas(cache, lista, statusLabel, "");
+        });
+
+        task.setOnFailed(event -> {
+            statusLabel.setText("Erro ao apagar encomenda.");
+
+            Alert erro = new Alert(Alert.AlertType.ERROR);
+            erro.setHeaderText("Erro ao apagar encomenda");
+            erro.setContentText(task.getException() == null ? "Erro desconhecido." : task.getException().getMessage());
+            erro.showAndWait();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private VBox infoBlock(String title, String value) {
+        VBox box = new VBox(4);
+
+        Label t = new Label(title);
+        t.setStyle("-fx-font-size: 12; -fx-text-fill: #64748b;");
+
+        Label v = new Label(value == null ? "-" : value);
+        v.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        box.getChildren().addAll(t, v);
+        return box;
+    }
+
+    private Label estadoBadge(String estado) {
+        if (estado == null) {
+            return badge("-", "#e5e7eb", "#334155");
+        }
+
+        return switch (estado.toUpperCase()) {
+            case "AGUARDA_DESIGN" -> badge("Aguarda design", "#fee2e2", "#dc2626");
+            case "PREPARACAO", "EM PREPARAÇÃO", "EM_PREPARACAO" -> badge("Em preparação", "#dbeafe", "#2563eb");
+            case "PRONTA" -> badge("Pronta", "#ffedd5", "#ea580c");
+            case "PAGA" -> badge("Paga", "#dcfce7", "#15803d");
+            default -> badge(estado, "#e5e7eb", "#334155");
+        };
+    }
+
+    private String formatarEstado(String estado) {
+        if (estado == null) {
+            return "-";
+        }
+
+        return switch (estado.toUpperCase()) {
+            case "AGUARDA_DESIGN" -> "Aguarda design";
+            case "PREPARACAO", "EM_PREPARACAO" -> "Em preparação";
+            case "PRONTA" -> "Pronta";
+            case "PAGA" -> "Paga";
+            default -> estado;
+        };
     }
 
     private String mapearEstado(Long idestado) {
@@ -245,5 +361,71 @@ public class RececionistaEncomendasListPage {
             case 4 -> "PAGA";
             default -> "ESTADO_" + idestado;
         };
+    }
+
+    private Label badge(String text, String bg, String fg) {
+        Label label = new Label(text);
+        label.setStyle(
+                "-fx-background-color: " + bg + ";" +
+                        "-fx-text-fill: " + fg + ";" +
+                        "-fx-padding: 7 12 7 12;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-font-size: 12;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        return label;
+    }
+
+    private VBox emptyCard(String text) {
+        VBox box = new VBox();
+        box.setPadding(new Insets(22));
+        box.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
+
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: #64748b; -fx-font-weight: bold;");
+
+        box.getChildren().add(label);
+        return box;
+    }
+
+    private Button outlineButton(String text) {
+        Button button = new Button(text);
+        button.setPrefHeight(42);
+        button.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: #dbe2ea;" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #0f172a;" +
+                        "-fx-padding: 0 18 0 18;" +
+                        "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    private Button dangerButton(String text) {
+        Button button = new Button(text);
+        button.setPrefHeight(42);
+        button.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: #fecaca;" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #dc2626;" +
+                        "-fx-padding: 0 18 0 18;" +
+                        "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    private String texto(String value) {
+        return value == null ? "" : value.toLowerCase();
     }
 }
