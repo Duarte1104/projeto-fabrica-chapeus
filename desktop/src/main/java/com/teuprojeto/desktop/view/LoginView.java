@@ -8,6 +8,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class LoginView {
 
@@ -39,6 +41,18 @@ public class LoginView {
         logoCircle.setPrefSize(88, 88);
         logoCircle.setMaxSize(88, 88);
         logoCircle.setStyle("-fx-background-color: linear-gradient(to bottom, #16235c, #1f3ccf); -fx-background-radius: 999;");
+
+        ImageView logo = new ImageView(
+                new Image(getClass().getResource("/images/logo-chapeu.png").toExternalForm())
+        );
+
+        logo.setFitWidth(70);
+        logo.setFitHeight(70);
+        logo.setPreserveRatio(true);
+        logo.setSmooth(true);
+
+        logoCircle.getChildren().add(logo);
+
 
         Label title = new Label("Fábrica de chapéus");
         title.setStyle("-fx-font-size: 21; -fx-font-weight: bold; -fx-text-fill: #111;");
