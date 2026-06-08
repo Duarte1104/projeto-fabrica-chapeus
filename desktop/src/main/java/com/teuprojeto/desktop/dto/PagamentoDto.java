@@ -1,42 +1,29 @@
-package com.teuprojeto.projeto.entity;
+package com.teuprojeto.desktop.dto;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "pagamento", schema = "public")
-public class Pagamento {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class PagamentoDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cod")
     private Long cod;
-
-    @Column(name = "valorpago", nullable = false)
     private BigDecimal valorpago;
-
-    @Column(name = "idencomenda", nullable = false)
     private BigDecimal idencomenda;
-
-    @Column(name = "numfatura", nullable = false)
     private Long numfatura;
-
-    @Column(name = "datapagamento", nullable = false)
-    private LocalDateTime datapagamento;
-
-    @Column(name = "metodopagamento", length = 50)
+    private String datapagamento;
     private String metodopagamento;
-
-    @Column(name = "observacoes", length = 1000)
     private String observacoes;
 
-    public Pagamento() {
+    public PagamentoDto() {
     }
 
     public Long getCod() {
         return cod;
+    }
+
+    public void setCod(Long cod) {
+        this.cod = cod;
     }
 
     public BigDecimal getValorpago() {
@@ -63,11 +50,11 @@ public class Pagamento {
         this.numfatura = numfatura;
     }
 
-    public LocalDateTime getDatapagamento() {
+    public String getDatapagamento() {
         return datapagamento;
     }
 
-    public void setDatapagamento(LocalDateTime datapagamento) {
+    public void setDatapagamento(String datapagamento) {
         this.datapagamento = datapagamento;
     }
 

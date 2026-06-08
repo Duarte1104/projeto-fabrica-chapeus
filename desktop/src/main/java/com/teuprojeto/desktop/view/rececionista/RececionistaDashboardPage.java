@@ -86,7 +86,7 @@ public class RececionistaDashboardPage {
                 resumoRow("Aguarda Design", "Pedidos que ainda precisam de proposta do designer", aguardaDesign),
                 resumoRow("Em Preparação", "Encomendas que já podem avançar para produção", emPreparacao),
                 resumoRow("Prontas para Entrega", "Encomendas finalizadas e prontas para entrega", prontasEntrega),
-                resumoRow("Faturas Emitidas", "Faturas emitidas pela receção", faturasEmitidas)
+                resumoRow("Faturas Emitidas", "Faturas geradas automaticamente quando as encomendas ficam prontas", faturasEmitidas)
         );
 
         VBox actionsBox = new VBox(14);
@@ -104,10 +104,10 @@ public class RececionistaDashboardPage {
         Button btnNovaEncomenda = RececionistaUiFactory.secondaryButton("Nova Encomenda");
         btnNovaEncomenda.setOnAction(e -> shell.navigateTo(RececionistaPage.ENCOMENDAS_CRIAR));
 
-        Button btnFaturas = RececionistaUiFactory.secondaryButton("Faturas");
-        btnFaturas.setOnAction(e -> shell.navigateTo(RececionistaPage.FATURAS));
+        Button btnPagamentos = RececionistaUiFactory.secondaryButton("Pagamentos e Recibos");
+        btnPagamentos.setOnAction(e -> shell.navigateTo(RececionistaPage.PAGAMENTOS));
 
-        actions.getChildren().addAll(btnClientes, btnNovoCliente, btnNovaEncomenda, btnFaturas);
+        actions.getChildren().addAll(btnClientes, btnNovoCliente, btnNovaEncomenda, btnPagamentos);
 
         actionsBox.getChildren().addAll(sectionTitle("Ações rápidas"), actions);
 
@@ -126,8 +126,7 @@ public class RececionistaDashboardPage {
                 sectionTitle("Prazos Próximos"),
                 prazoRow("Hoje", "Verificar encomendas prontas", "Prioridade alta", "#fee2e2", "#dc2626"),
                 prazoRow("2 dias", "Confirmar designs pendentes", "Aguardam decisão", "#ffedd5", "#ea580c"),
-                prazoRow("Esta semana", "Validar faturas emitidas", "Organização financeira", "#dbeafe", "#2563eb")
-        );
+                prazoRow("Esta semana", "Emitir recibos pendentes", "Pagamentos recebidos aguardam validação", "#dbeafe", "#2563eb")        );
 
         VBox alertasCard = card();
         alertasCard.getChildren().addAll(

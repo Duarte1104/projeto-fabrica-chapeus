@@ -93,7 +93,7 @@ public class RececionistaShellView {
         addMenuButton(menuBox, "Dashboard", RececionistaPage.DASHBOARD);
         addMenuButton(menuBox, "Clientes", RececionistaPage.CLIENTES_LISTAR);
         addMenuButton(menuBox, "Encomendas", RececionistaPage.ENCOMENDAS_LISTAR);
-        addMenuButton(menuBox, "Faturas", RececionistaPage.FATURAS);
+        addMenuButton(menuBox, "Pagamentos", RececionistaPage.PAGAMENTOS);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -170,8 +170,7 @@ public class RececionistaShellView {
             case ENCOMENDAS_LISTAR -> new RececionistaEncomendasListPage(this).getView();
             case ENCOMENDAS_CRIAR -> new RececionistaCriarEncomendaPage(this).getView();
             case ENCOMENDAS_VER -> new RececionistaVerEncomendaPage(this).getView();
-            case FATURAS -> new RececionistaFaturasPage(this).getView();
-        };
+            case PAGAMENTOS -> new RececionistaPagamentosPage(this).getView();        };
 
         contentArea.getChildren().setAll(pageView);
     }

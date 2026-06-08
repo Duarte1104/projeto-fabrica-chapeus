@@ -747,4 +747,117 @@ body {
     .auth-form .form-group {
         width: 100%;
     }
+
+    .status-paid {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-partial {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .status-pending {
+        background: #ffedd5;
+        color: #c2410c;
+    }
+
+    .invoice-info {
+        gap: 12px;
+    }
+
+    .payment-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 20px;
+    }
+
+    .payment-box h4,
+    .payment-history h4,
+    .order-section h4 {
+        font-size: 17px;
+        font-weight: 900;
+        margin-bottom: 8px;
+    }
+
+    .payment-box p {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    .payment-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: end;
+    }
+
+    .payment-form .btn-primary {
+        grid-column: span 2;
+            width: 100%;
+            min-height: 52px;
+            padding: 0 24px;
+            font-size: 15px;
+            font-weight: 900;
+            white-space: nowrap;
+    }
+
+    .payment-notes {
+        grid-column: span 2;
+    }
+
+    .payment-history {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 18px;
+    }
+
+    .payment-line {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 14px;
+        margin-top: 10px;
+    }
+
+    .payment-line span {
+        display: block;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 5px;
+    }
+
+    .payment-line strong {
+        font-size: 14px;
+        color: #111827;
+    }
+
+    .order-section {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .order-notes {
+        color: #475569;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 900px) {
+        .payment-form,
+        .payment-line {
+            grid-template-columns: 1fr;
+        }
+
+        .payment-notes {
+            grid-column: span 1;
+        }
+    }
 }

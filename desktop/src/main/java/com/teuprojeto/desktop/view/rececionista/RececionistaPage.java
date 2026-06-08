@@ -8,5 +8,5 @@ public enum RececionistaPage {
     ENCOMENDAS_LISTAR,
     ENCOMENDAS_CRIAR,
     ENCOMENDAS_VER,
-    FATURAS
+    PAGAMENTOS
 }

@@ -32,11 +32,21 @@
         <header class="client-topbar">
             <div>
                 <h2>Faturas</h2>
-                <p>Consulte as faturas associadas às suas encomendas.</p>
+                <p>Consulte as suas faturas, pagamentos efetuados e valores em dívida.</p>
             </div>
 
             <a th:href="@{/nova-encomenda}" class="btn-header">Nova Encomenda</a>
         </header>
+
+        <div class="alert alert-success"
+             th:if="${sucesso != null and !#strings.isEmpty(sucesso)}"
+             th:text="${sucesso}">
+        </div>
+
+        <div class="alert alert-error"
+             th:if="${erro != null and !#strings.isEmpty(erro)}"
+             th:text="${erro}">
+        </div>
 
         <section class="empty-state-card" th:if="${faturas == null or faturas.isEmpty()}">
             <div class="empty-icon">📄</div>
@@ -61,12 +71,14 @@
                         </h3>
                     </div>
 
-                    <span class="modern-order-status status-finished">
-                        Paga
+                    <span class="modern-order-status"
+                          th:classappend="${item.estadoPagamento == 'Paga' ? ' status-paid' : (item.estadoPagamento == 'Parcial' ? ' status-partial' : ' status-pending')}"
+                          th:text="${item.estadoPagamento}">
+                        Pendente
                     </span>
                 </div>
 
-                <div class="modern-order-info">
+                <div class="modern-order-info invoice-info">
 
                     <div>
                         <span>Data</span>
@@ -74,29 +86,121 @@
                     </div>
 
                     <div>
-                        <span>Valor</span>
+                        <span>Valor da fatura</span>
                         <strong th:text="${#numbers.formatDecimal(item.fatura.valor, 1, 'POINT', 2, 'COMMA') + ' €'}">
                             0,00 €
                         </strong>
                     </div>
 
                     <div>
-                        <span>Estado</span>
-                        <strong>Emitida</strong>
+                        <span>Total pago</span>
+                        <strong th:text="${#numbers.formatDecimal(item.totalPago, 1, 'POINT', 2, 'COMMA') + ' €'}">
+                            0,00 €
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Valor em dívida</span>
+                        <strong th:text="${#numbers.formatDecimal(item.valorEmDivida, 1, 'POINT', 2, 'COMMA') + ' €'}">
+                            0,00 €
+                        </strong>
                     </div>
 
                 </div>
 
                 <div class="order-section"
                      th:if="${item.fatura.observacoes != null and !#strings.isEmpty(item.fatura.observacoes)}">
-                    <h4>Observações</h4>
+                    <h4>Observações da fatura</h4>
                     <p class="order-notes" th:text="${item.fatura.observacoes}">
                         Observações da fatura
                     </p>
                 </div>
 
+                <div class="payment-box" th:if="${item.temDivida}">
+                    <h4>Registar pagamento</h4>
+                    <p>
+                        Pode pagar uma parte ou a totalidade do valor em dívida.
+                    </p>
+
+                    <form method="post"
+                          th:action="@{/faturas/{id}/pagar(id=${item.fatura.id})}"
+                          class="payment-form">
+
+                        <div class="form-group">
+                            <label>Valor a pagar</label>
+                            <input type="number"
+                                   name="valorPago"
+                                   step="0.01"
+                                   min="0.01"
+                                   required
+                                   th:attr="max=${item.valorEmDivida}"
+                                   th:value="${item.valorEmDivida}">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Método de pagamento</label>
+                            <select name="metodoPagamento" required>
+                                <option value="MB WAY">MB WAY</option>
+                                <option value="Cartão">Cartão</option>
+                                <option value="Transferência">Transferência</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group payment-notes">
+                            <label>Observações</label>
+                            <input type="text"
+                                   name="observacoes"
+                                   placeholder="Ex: pagamento parcial">
+                        </div>
+
+                        <button type="submit" class="btn-primary">
+                            Pagar
+                        </button>
+                    </form>
+                </div>
+
+                <div class="payment-history"
+                     th:if="${item.pagamentos != null and !item.pagamentos.isEmpty()}">
+
+                    <h4>Pagamentos registados</h4>
+
+                    <div class="payment-line"
+                         th:each="pagamento : ${item.pagamentos}">
+
+                        <div>
+                            <span>Valor</span>
+                            <strong th:text="${#numbers.formatDecimal(pagamento.valorpago, 1, 'POINT', 2, 'COMMA') + ' €'}">
+                                0,00 €
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Método</span>
+                            <strong th:text="${pagamento.metodopagamento}">
+                                Método
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Data</span>
+                            <strong th:text="${pagamento.datapagamento}">
+                                Data
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
                 <div class="modern-order-footer">
-                    <span>Documento disponível</span>
+                    <span th:if="${item.temDivida}">
+                        Pagamento pendente
+                    </span>
+
+                    <span th:if="${!item.temDivida}">
+                        Fatura totalmente paga
+                    </span>
 
                     <a class="details-button"
                        th:href="@{/encomendas/{id}(id=${item.encomenda.num})}">

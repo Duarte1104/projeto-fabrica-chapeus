@@ -16,13 +16,16 @@ public class ProducaoEncomendaService {
 
     private final ProducaoEncomendaRepository producaoEncomendaRepository;
     private final EncomendaRepository encomendaRepository;
+    private final FaturaService faturaService;
 
     public ProducaoEncomendaService(
             ProducaoEncomendaRepository producaoEncomendaRepository,
-            EncomendaRepository encomendaRepository
+            EncomendaRepository encomendaRepository,
+            FaturaService faturaService
     ) {
         this.producaoEncomendaRepository = producaoEncomendaRepository;
         this.encomendaRepository = encomendaRepository;
+        this.faturaService = faturaService;
     }
 
     @Transactional
@@ -52,7 +55,9 @@ public class ProducaoEncomendaService {
 
         if (Boolean.TRUE.equals(request.getConcluida())) {
             encomenda.setIdestado(3L); // PRONTA
-            encomendaRepository.save(encomenda);
+            Encomenda encomendaGuardada = encomendaRepository.save(encomenda);
+
+            faturaService.emitirAutomaticamenteSeNecessario(encomendaGuardada);
         }
 
         return producaoGuardada;

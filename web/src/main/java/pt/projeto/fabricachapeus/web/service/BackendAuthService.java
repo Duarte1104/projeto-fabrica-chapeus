@@ -158,4 +158,37 @@ public class BackendAuthService {
             throw new IllegalStateException("Não foi possível carregar as faturas.");
         }
     }
+    public List<PagamentoDto> listarPagamentosPorFatura(Long idFatura) {
+        try {
+            PagamentoDto[] pagamentos = restTemplate.getForObject(
+                    backendBaseUrl + "/pagamentos/fatura/" + idFatura,
+                    PagamentoDto[].class
+            );
+
+            return pagamentos == null ? List.of() : List.of(pagamentos);
+
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível carregar os pagamentos da fatura.");
+        }
+    }
+
+    public void criarPagamento(CriarPagamentoRequestDto request) {
+        try {
+            restTemplate.postForObject(
+                    backendBaseUrl + "/pagamentos",
+                    request,
+                    PagamentoDto.class
+            );
+        } catch (HttpStatusCodeException e) {
+            String mensagem = e.getResponseBodyAsString();
+
+            if (mensagem == null || mensagem.isBlank()) {
+                throw new IllegalArgumentException("Não foi possível registar o pagamento.");
+            }
+
+            throw new IllegalArgumentException(mensagem);
+        } catch (RestClientException e) {
+            throw new IllegalStateException("Não foi possível contactar o backend para registar o pagamento.");
+        }
+    }
 }

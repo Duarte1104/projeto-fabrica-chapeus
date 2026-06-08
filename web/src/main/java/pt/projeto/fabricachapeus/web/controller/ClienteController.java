@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import pt.projeto.fabricachapeus.web.dto.*;
 import pt.projeto.fabricachapeus.web.service.BackendAuthService;
+import java.math.BigDecimal;
 
 import java.util.*;
 
@@ -209,7 +210,10 @@ public class ClienteController {
     }
 
     @GetMapping("/faturas")
-    public String faturas(HttpSession session, Model model) {
+    public String faturas(
+            HttpSession session,
+            Model model
+    ) {
         String pagina = protegerPagina(session, model, "faturas");
 
         if (!"faturas".equals(pagina)) {
@@ -231,9 +235,20 @@ public class ClienteController {
             List<FaturaDto> faturas = backendAuthService.listarFaturasPorEncomenda(encomenda.getNum());
 
             for (FaturaDto fatura : faturas) {
+                List<PagamentoDto> pagamentos = backendAuthService.listarPagamentosPorFatura(fatura.getId());
+
+                BigDecimal totalPago = calcularTotalPago(pagamentos);
+                BigDecimal valorEmDivida = calcularValorEmDivida(fatura, totalPago);
+
                 Map<String, Object> dados = new HashMap<>();
                 dados.put("fatura", fatura);
                 dados.put("encomenda", encomenda);
+                dados.put("pagamentos", pagamentos);
+                dados.put("totalPago", totalPago);
+                dados.put("valorEmDivida", valorEmDivida);
+                dados.put("estadoPagamento", estadoPagamento(totalPago, valorEmDivida));
+                dados.put("temDivida", valorEmDivida.compareTo(BigDecimal.ZERO) > 0);
+
                 faturasDetalhadas.add(dados);
             }
         }
@@ -241,6 +256,82 @@ public class ClienteController {
         model.addAttribute("faturas", faturasDetalhadas);
 
         return "faturas";
+    }
+
+    @PostMapping("/faturas/{idFatura}/pagar")
+    public String pagarFatura(
+            @PathVariable Long idFatura,
+            @RequestParam String valorPago,
+            @RequestParam String metodoPagamento,
+            @RequestParam(required = false) String observacoes,
+            HttpSession session,
+            RedirectAttributes redirectAttributes
+    ) {
+        Object clienteIdObj = session.getAttribute("clienteId");
+
+        if (clienteIdObj == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            Integer clienteId = Integer.valueOf(clienteIdObj.toString());
+
+            FaturaDto faturaEncontrada = null;
+            BigDecimal valorEmDivida = BigDecimal.ZERO;
+
+            List<EncomendaDto> encomendas = backendAuthService.listarEncomendasCliente(clienteId);
+
+            for (EncomendaDto encomenda : encomendas) {
+                List<FaturaDto> faturas = backendAuthService.listarFaturasPorEncomenda(encomenda.getNum());
+
+                for (FaturaDto fatura : faturas) {
+                    if (fatura.getId() != null && fatura.getId().equals(idFatura)) {
+                        List<PagamentoDto> pagamentos = backendAuthService.listarPagamentosPorFatura(fatura.getId());
+                        BigDecimal totalPago = calcularTotalPago(pagamentos);
+
+                        faturaEncontrada = fatura;
+                        valorEmDivida = calcularValorEmDivida(fatura, totalPago);
+                        break;
+                    }
+                }
+
+                if (faturaEncontrada != null) {
+                    break;
+                }
+            }
+
+            if (faturaEncontrada == null) {
+                throw new IllegalArgumentException("Fatura não encontrada para este cliente.");
+            }
+
+            if (valorEmDivida.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Esta fatura já se encontra totalmente paga.");
+            }
+
+            BigDecimal valor = parseValor(valorPago);
+
+            if (valor.compareTo(valorEmDivida) > 0) {
+                throw new IllegalArgumentException(
+                        "O valor pago não pode ser superior ao valor em dívida: "
+                                + valorEmDivida + " €."
+                );
+            }
+
+            CriarPagamentoRequestDto request = new CriarPagamentoRequestDto();
+            request.setIdFatura(idFatura);
+            request.setValorPago(valor);
+            request.setMetodoPagamento(isBlank(metodoPagamento) ? "Web" : metodoPagamento.trim());
+            request.setObservacoes(isBlank(observacoes) ? "Pagamento registado pelo cliente na aplicação web." : observacoes.trim());
+
+            backendAuthService.criarPagamento(request);
+
+            redirectAttributes.addFlashAttribute("sucesso", "Pagamento registado com sucesso.");
+
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        }
+
+        return "redirect:/faturas";
     }
 
     @GetMapping("/perfil")
@@ -375,6 +466,59 @@ public class ClienteController {
             case 4 -> "Paga";
             default -> "Estado " + idEstado;
         };
+    }
+
+    private BigDecimal calcularTotalPago(List<PagamentoDto> pagamentos) {
+        if (pagamentos == null || pagamentos.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return pagamentos.stream()
+                .map(PagamentoDto::getValorpago)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal calcularValorEmDivida(FaturaDto fatura, BigDecimal totalPago) {
+        BigDecimal valorFatura = fatura.getValor() == null ? BigDecimal.ZERO : fatura.getValor();
+        BigDecimal valorEmDivida = valorFatura.subtract(totalPago == null ? BigDecimal.ZERO : totalPago);
+
+        if (valorEmDivida.compareTo(BigDecimal.ZERO) < 0) {
+            return BigDecimal.ZERO;
+        }
+
+        return valorEmDivida;
+    }
+
+    private String estadoPagamento(BigDecimal totalPago, BigDecimal valorEmDivida) {
+        if (valorEmDivida.compareTo(BigDecimal.ZERO) <= 0) {
+            return "Paga";
+        }
+
+        if (totalPago != null && totalPago.compareTo(BigDecimal.ZERO) > 0) {
+            return "Parcial";
+        }
+
+        return "Pendente";
+    }
+
+    private BigDecimal parseValor(String texto) {
+        if (isBlank(texto)) {
+            throw new IllegalArgumentException("Indica o valor a pagar.");
+        }
+
+        try {
+            BigDecimal valor = new BigDecimal(texto.trim().replace(",", "."));
+
+            if (valor.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("O valor deve ser superior a zero.");
+            }
+
+            return valor;
+
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("O valor introduzido não é válido.");
+        }
     }
 
     private boolean isBlank(String value) {
