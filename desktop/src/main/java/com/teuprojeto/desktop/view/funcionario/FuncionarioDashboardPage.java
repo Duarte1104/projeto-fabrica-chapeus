@@ -87,19 +87,9 @@ public class FuncionarioDashboardPage {
                 prazosLista
         );
 
-        VBox resumoCard = card();
-        Label progressoValor = statNumber("0%");
-        progressoValor.setStyle("-fx-font-size: 38; -fx-font-weight: bold; -fx-text-fill: #2563eb;");
 
-        resumoCard.getChildren().addAll(
-                sectionTitle("Resumo de Produção"),
-                productionRow("Montagem", "65%", "#2563eb"),
-                productionRow("Costuras", "50%", "#16a34a"),
-                productionRow("Personalização", "40%", "#f97316"),
-                smallText("Indicadores gerais de progresso das encomendas ativas.")
-        );
 
-        painelDireito.getChildren().addAll(prazosCard, resumoCard);
+        painelDireito.getChildren().addAll(prazosCard);
 
         mainGrid.getChildren().addAll(painelPrincipal, painelDireito);
 

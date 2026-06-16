@@ -121,21 +121,8 @@ public class RececionistaDashboardPage {
         VBox painelDireito = new VBox(22);
         painelDireito.setPrefWidth(420);
 
-        VBox prazosCard = card();
-        prazosCard.getChildren().addAll(
-                sectionTitle("Prazos Próximos"),
-                prazoRow("Hoje", "Verificar encomendas prontas", "Prioridade alta", "#fee2e2", "#dc2626"),
-                prazoRow("2 dias", "Confirmar designs pendentes", "Aguardam decisão", "#ffedd5", "#ea580c"),
-                prazoRow("Esta semana", "Emitir recibos pendentes", "Pagamentos recebidos aguardam validação", "#dbeafe", "#2563eb")        );
 
-        VBox alertasCard = card();
-        alertasCard.getChildren().addAll(
-                sectionTitle("Alertas"),
-                alertBox("As encomendas prontas devem ser verificadas para faturação."),
-                alertBox("Os pedidos com design devem ser acompanhados até aprovação do cliente.")
-        );
 
-        painelDireito.getChildren().addAll(prazosCard, alertasCard);
 
         mainGrid.getChildren().addAll(painelPrincipal, painelDireito);
 
