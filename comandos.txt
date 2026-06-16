@@ -1,0 +1,8 @@
+.\mvnw -pl backend spring-boot:run
+
+.\mvnw -pl desktop javafx:run
+
+.\mvnw -pl web spring-boot:run
+
+se for preciso compilar tudo antes:
+.\mvnw clean install -DskipTests
